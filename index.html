@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教檢考古題複習</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --secondary: #576574;
+            --bg: #f4f7f6;
+            --white: #ffffff;
+            --accent: #ff9f43;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #app-container { width: 100%; max-width: 600px; padding-bottom: 50px;}
+
+        /* --- 導航列 --- */
+        .nav-header {
+            width: 100%;
+            display: none;
+            align-items: center;
+            background: var(--white);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0 10px 0 0;
+        }
+
+        .breadcrumb {
+            font-size: 0.9rem;
+            color: var(--secondary);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* --- 列表與網格樣式 --- */
+        .list-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.1s;
+        }
+        .list-card:active { transform: scale(0.98); background: #fafafa; }
+        .list-card-title { font-weight: 600; font-size: 1.05rem; }
+
+        .year-section-title {
+            margin: 20px 0 10px 0;
+            font-size: 0.9rem;
+            color: #888;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        
+        .year-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .year-btn {
+            background: var(--white);
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px 0;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .year-btn:active { background: var(--primary); color: white; }
+        .year-btn.all-years { grid-column: span 3; background: var(--secondary); color: white; }
+
+        /* --- 作答區樣式 --- */
+        .quiz-container {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            min-height: 300px;
+            position: relative;
+        }
+
+        .quiz-meta {
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            white-space: pre-wrap; /* 保留換行 */
+        }
+
+        /* 選項按鈕 */
+        .option-btn {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fff;
+            text-align: left;
+            font-size: 1rem;
+            color: #444;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .option-tag {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #eee;
+            color: #666;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        /* 作答狀態樣式 */
+        .option-btn.correct { background: #e8f8f5; border-color: var(--success); color: var(--success); }
+        .option-btn.correct .option-tag { background: var(--success); color: white; }
+        
+        .option-btn.wrong { background: #fdedec; border-color: var(--error); color: var(--error); }
+        .option-btn.wrong .option-tag { background: var(--error); color: white; }
+
+        /* 解析區塊修正版 */
+.explanation-box {
+    margin-top: 20px;
+    padding: 15px;
+    background: #fff8e1;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #5d4037;
+    border-left: 4px solid #ffca28;
+    
+    /* 關鍵修正：保留換行，但合併多餘空白，並強制換行 */
+    white-space: pre-line; 
+    word-break: break-word; 
+    overflow-wrap: break-word;
+    
+    /* 確保寬度不溢出 */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+        /* 底部控制列 */
+        .quiz-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        .control-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            background: var(--primary);
+            color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .control-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* 非選擇題按鈕 */
+        .show-ans-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <div id="nav-header" class="nav-header">
+            <button class="back-btn" onclick="goBack()">❮ 返回</button>
+            <span id="breadcrumb" class="breadcrumb"></span>
+        </div>
+
+        <div id="view-main">
+            <h2 style="margin-bottom: 20px; color: #444; padding-left: 5px;">請選擇測驗領域</h2>
+            <div id="main-list-container"></div>
+        </div>
+
+        <div id="view-sub" class="hidden">
+            <h3 style="margin-bottom: 15px; color: #555; padding-left: 5px;">請選擇主題</h3>
+            <div id="sub-list"></div>
+        </div>
+
+        <div id="view-year" class="hidden">
+            <h3 style="margin-bottom: 5px; color: #555; padding-left: 5px;">選擇作答年份</h3>
+            <p style="font-size:0.85rem; color:#888; margin-bottom:15px; padding-left: 5px;">主題：<span id="year-target-topic"></span></p>
+            <div id="year-grid-container"></div>
+        </div>
+
+        <div id="view-quiz" class="hidden">
+            <div class="quiz-container">
+                <div id="quiz-content"></div>
+
+                <div class="quiz-controls">
+                    <button class="control-btn" id="btn-prev" onclick="prevQuestion()">上一題</button>
+                    <span id="question-counter" style="line-height: 36px; color: #999;">1 / 10</span>
+                    <button class="control-btn" id="btn-next" onclick="nextQuestion()">下一題</button>
+                </div>
+            </div>
+            
+            <div id="no-quiz-msg" class="hidden" style="text-align: center; margin-top: 50px; color: #777;">
+                此分類/年份目前尚無題目資料。<br>請匯入 CSV 資料。
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. 資料庫 (從您提供的 CSV 轉換而來)
+        // ==========================================
+        const questionsDB = [
+            {
+                "id": "114-curr-test-01",
+                "year": "114年",
+                "main": "課程教學與評量",
+                "sub": "教育測驗與評量",
+                "type": "choice",
+                "question": "李老師觀察學生課堂學習行為,並實施隨堂考試,即時分析學生學習情況以調整教學策略。此做法較屬於下列何種評量類型?",
+                "options": ["形成性評量", "總結性評量", "診斷性評量", "安置性評量"],
+                "answer": "A", // A=0, B=1, C=2, D=3
+                "explanation": "(A) 形成性評量\n-->在教學過程中進行，目的在於改進教學與促進學習。\n(B) 總結性評量\n-->單元/學期/課程結束時，用來判斷學習成果（例如期末考）。\n(C) 診斷性評量\n-->用於了解學生學習困難的原因\n(D) 安置性評量\n--用於決定學生的分組、程度、課程安排。\n\n故選(A)"
+            },
+            {
+                "id": "114-edu-soc-02",
+                "year": "114年",
+                "main": "教育理念與實務",
+                "sub": "教育社會學", // 註：原本 CSV 此欄空白，我根據內容自動歸類至社會學
+                "type": "mixed", // 非選擇題
+                "question": "2.傳統教育社會學認為,上層階級的學生透過學習「高雅文化」(如古典音樂等),獲得學校的認可,延續其階級優勢。然而,近代研究發現上層階級的學生不僅學習高雅文化,還欣賞「大眾文化」(如流行音樂等),展現出多元文化的參與能力。這種階級界線模糊化的現象稱為「文化雜食」(cultural omnivorousness),此概念強調多元與跨界,看似模糊階級界線,但這樣的跨域能力更會是優勢文化資本,並形成新的階級再製。\n\n(1)舉出在教育過程中,文化資本造成階級再製的兩項原因。(6分)\n(2)說明為何文化雜食本身可能是一種優勢的文化資本?(4分)",
+                "options": [],
+                "answer": "", // 非選擇題無標準單一答案，或可填入參考關鍵字
+                "explanation": "【參考詳解】\n(1) 文化資本造成階級再製的原因：\n- 學校課程內容傾向中上階級文化，對勞工階級學生不利。\n- 教師對不同階級學生的期望與互動方式不同。\n\n(2) 文化雜食作為優勢：\n- 擁有多元品味能適應不同社交場合，擴展社會資本。\n- 展現「包容性」與「高雅」並存的特質，成為新的菁英標記。"
+            }
+        ];
+
+        // 選單結構定義
+        const structure = {
+            "國語文能力測驗": [], 
+            "教育理念與實務": ["教育的基本概念", "教育史學", "教育哲學", "教育社會學", "各國教育制度", "重要教育法規", "教育政策"],
+            "學習者發展與適性輔導": ["教育心理學", "青少年發展", "青少年輔導"],
+            "課程教學與評量": ["課程", "教學", "教育測驗與評量"]
+        };
+
+        // ==========================================
+        // 2. 狀態管理與核心變數
+        // ==========================================
+        let historyStack = [];
+        let currentSelections = { main: '', sub: '', year: '' };
+        let currentQuizList = []; // 當前篩選出來的題目列表
+        let currentQuestionIndex = 0; // 目前第幾題
+
+        const views = {
+            main: document.getElementById('view-main'),
+            sub: document.getElementById('view-sub'),
+            year: document.getElementById('view-year'),
+            quiz: document.getElementById('view-quiz')
+        };
+        const navHeader = document.getElementById('nav-header');
+        const breadcrumb = document.getElementById('breadcrumb');
+
+        // ==========================================
+        // 3. 初始化與導航邏輯
+        // ==========================================
+        function init() {
+            renderMain();
+            switchView('main');
+        }
+
+        function switchView(viewId) {
+            Object.values(views).forEach(el => el.classList.add('hidden'));
+            views[viewId].classList.remove('hidden');
+
+            if (viewId === 'main') {
+                navHeader.style.display = 'none';
+                historyStack = [];
+            } else {
+                navHeader.style.display = 'flex';
+                updateBreadcrumb();
+            }
+        }
+
+        function updateBreadcrumb() {
+            let text = currentSelections.main;
+            if (currentSelections.sub && currentSelections.sub !== currentSelections.main) {
+                text += ` > ${currentSelections.sub}`;
+            }
+            if (currentSelections.year) {
+                text += ` > ${currentSelections.year}`;
+            }
+            breadcrumb.innerText = text;
+        }
+
+        function goBack() {
+            if (historyStack.length === 0) return;
+            const prevView = historyStack.pop();
+            
+            if (prevView === 'year') currentSelections.year = '';
+            if (prevView === 'sub') {
+                currentSelections.sub = '';
+                currentSelections.year = '';
+            }
+            if (prevView === 'main') {
+                currentSelections = { main: '', sub: '', year: '' };
+            }
+            switchView(prevView);
+        }
+
+        // ==========================================
+        // 4. 選單渲染 (主/次/年)
+        // ==========================================
+        function renderMain() {
+            const container = document.getElementById('main-list-container');
+            container.innerHTML = ''; 
+            Object.keys(structure).forEach(key => {
+                const card = createCard(key, () => handleMainClick(key));
+                container.appendChild(card);
+            });
+        }
+
+        function handleMainClick(key) {
+            currentSelections.main = key;
+            historyStack.push('main');
+            const subCats = structure[key];
+            if (subCats.length > 0) {
+                renderSub(subCats);
+                switchView('sub');
+            } else {
+                currentSelections.sub = key; 
+                renderYear();
+                switchView('year');
+            }
+        }
+
+        function renderSub(items) {
+            const container = document.getElementById('sub-list');
+            container.innerHTML = '';
+            items.forEach(item => {
+                const card = createCard(item, () => {
+                    currentSelections.sub = item;
+                    historyStack.push('sub');
+                    renderYear();
+                    switchView('year');
+                });
+                container.appendChild(card);
+            });
+        }
+
+        function renderYear() {
+            document.getElementById('year-target-topic').innerText = currentSelections.sub;
+            const container = document.getElementById('year-grid-container');
+            container.innerHTML = '';
+
+            const allBtn = document.createElement('div');
+            allBtn.className = 'year-btn all-years';
+            allBtn.innerText = '全部年份';
+            allBtn.onclick = () => prepareQuiz('全部年份');
+            container.appendChild(allBtn);
+
+            createYearSection(container, '新課綱時期 (108-114)', 114, 108);
+            createYearSection(container, '舊制時期 (94-106)', 106, 94);
+        }
+
+        function createYearSection(container, titleText, start, end) {
+            const title = document.createElement('div');
+            title.className = 'year-section-title';
+            title.innerText = titleText;
+            container.appendChild(title);
+            const grid = document.createElement('div');
+            grid.className = 'year-grid';
+            for (let y = start; y >= end; y--) {
+                const btn = document.createElement('div');
+                btn.className = 'year-btn';
+                btn.innerText = y + '年';
+                btn.onclick = () => prepareQuiz(y + '年');
+                grid.appendChild(btn);
+            }
+            container.appendChild(grid);
+        }
+
+        // ==========================================
+        // 5. 作答系統核心
+        // ==========================================
+        function prepareQuiz(year) {
+            currentSelections.year = year;
+            historyStack.push('year');
+
+            // 篩選題目
+            currentQuizList = questionsDB.filter(q => {
+                const matchMain = q.main === currentSelections.main;
+                // 若子分類在 JSON 中有填寫，則需匹配；若選單是特殊情況則忽略
+                // 這裡簡化邏輯：比對 SubCategory
+                const matchSub = (currentSelections.sub === q.main) || (q.sub === currentSelections.sub); 
+                const matchYear = (year === '全部年份') || (q.year === year);
+                
+                return matchMain && matchSub && matchYear;
+            });
+
+            currentQuestionIndex = 0;
+            renderQuizUI();
+            switchView('quiz');
+        }
+
+        function renderQuizUI() {
+            const contentDiv = document.getElementById('quiz-content');
+            const noMsg = document.getElementById('no-quiz-msg');
+            const controls = document.querySelector('.quiz-controls');
+
+            if (currentQuizList.length === 0) {
+                contentDiv.innerHTML = '';
+                controls.style.display = 'none';
+                noMsg.classList.remove('hidden');
+                return;
+            }
+
+            noMsg.classList.add('hidden');
+            controls.style.display = 'flex';
+            
+            // 渲染當前題目
+            const q = currentQuizList[currentQuestionIndex];
+            renderQuestion(q, contentDiv);
+            updateControls();
+        }
+
+        function renderQuestion(q, container) {
+            // 題目標籤 (年份 + 題型)
+            let typeLabel = q.type === 'choice' ? '選擇題' : '非選題';
+            let html = `
+                <div class="quiz-meta">
+                    <span>${q.year}</span>
+                    <span>${typeLabel}</span>
+                </div>
+                <div class="question-text">${q.question}</div>
+            `;
+
+            // 根據題型渲染選項
+            if (q.type === 'choice') {
+                html += `<div id="options-area">`;
+                const labels = ['A', 'B', 'C', 'D'];
+                q.options.forEach((opt, idx) => {
+                    html += `
+                        <button class="option-btn" onclick="checkAnswer(this, '${labels[idx]}', '${q.answer}')">
+                            <span class="option-tag">${labels[idx]}</span>
+                            ${opt}
+                        </button>
+                    `;
+                });
+                html += `</div>`;
+            } else {
+                // 非選擇題
+                html += `
+                    <button class="show-ans-btn" onclick="toggleExplanation()">觀看參考詳解</button>
+                `;
+            }
+
+            // 解析區塊 (預設隱藏)
+            html += `
+                <div id="explanation-area" class="explanation-box hidden">
+                    <strong>解析：</strong><br>
+                    ${q.explanation || '暫無解析'}
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // 檢查答案 (選擇題)
+        window.checkAnswer = function(btn, userOpt, correctOpt) {
+            // 避免重複點擊
+            const parent = btn.parentElement;
+            if (parent.dataset.answered === 'true') return;
+            parent.dataset.answered = 'true';
+
+            const explArea = document.getElementById('explanation-area');
+            const allBtns = parent.querySelectorAll('.option-btn');
+
+            if (userOpt === correctOpt) {
+                btn.classList.add('correct');
+            } else {
+                btn.classList.add('wrong');
+                // 顯示正確答案
+                const correctIndex = ['A','B','C','D'].indexOf(correctOpt);
+                if (correctIndex !== -1) allBtns[correctIndex].classList.add('correct');
+            }
+            
+            // 顯示解析
+            explArea.classList.remove('hidden');
+        }
+
+        // 顯示/隱藏解析 (非選擇題)
+        window.toggleExplanation = function() {
+            const el = document.getElementById('explanation-area');
+            el.classList.toggle('hidden');
+        }
+
+        // 上一題/下一題
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizList.length - 1) {
+                currentQuestionIndex++;
+                renderQuizUI();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderQuizUI();
+            }
+        }
+
+        function updateControls() {
+            document.getElementById('question-counter').innerText = 
+                `${currentQuestionIndex + 1} / ${currentQuizList.length}`;
+            document.getElementById('btn-prev').disabled = (currentQuestionIndex === 0);
+            document.getElementById('btn-next').disabled = (currentQuestionIndex === currentQuizList.length - 1);
+        }
+
+        function createCard(text, onClick) {
+            const div = document.createElement('div');
+            div.className = 'list-card';
+            div.innerHTML = `<span class="list-card-title">${text}</span><span style="color:#ccc">›</span>`;
+            div.onclick = onClick;
+            return div;
+        }
+
+        init();
+    </script>
+</body>
+</html>
