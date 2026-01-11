@@ -132,7 +132,17 @@
             line-height: 1.6;
             margin-bottom: 25px;
             color: #2c3e50;
-            white-space: pre-wrap; /* 保留換行 */
+            white-space: pre-wrap;
+        }
+        
+        /* 圖片自適應設定 */
+        .question-text img {
+            max-width: 100% !important;
+            height: auto !important;
+            display: block;
+            margin: 10px auto;
+            border-radius: 8px;
+            border: 1px solid #eee;
         }
 
         /* 選項按鈕 */
@@ -167,7 +177,6 @@
             flex-shrink: 0;
         }
 
-        /* 作答狀態樣式 */
         .option-btn.correct { background: #e8f8f5; border-color: var(--success); color: var(--success); }
         .option-btn.correct .option-tag { background: var(--success); color: white; }
         
@@ -175,27 +184,21 @@
         .option-btn.wrong .option-tag { background: var(--error); color: white; }
 
         /* 解析區塊修正版 */
-.explanation-box {
-    margin-top: 20px;
-    padding: 15px;
-    background: #fff8e1;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: #5d4037;
-    border-left: 4px solid #ffca28;
-    
-    /* 關鍵修正：保留換行，但合併多餘空白，並強制換行 */
-    white-space: pre-line; 
-    word-break: break-word; 
-    overflow-wrap: break-word;
-    
-    /* 確保寬度不溢出 */
-    width: 100%;
-    box-sizing: border-box;
-}
+        .explanation-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff8e1;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #5d4037;
+            border-left: 4px solid #ffca28;
+            white-space: pre-line; /* 保留換行但合併空白 */
+            word-break: break-word; /* 防止長文字撐破 */
+            width: 100%;
+            box-sizing: border-box;
+        }
 
-        /* 底部控制列 */
         .quiz-controls {
             display: flex;
             justify-content: space-between;
@@ -215,7 +218,6 @@
         }
         .control-btn:disabled { background: #ccc; cursor: not-allowed; }
 
-        /* 非選擇題按鈕 */
         .show-ans-btn {
             width: 100%;
             padding: 12px;
@@ -257,50 +259,505 @@
         <div id="view-quiz" class="hidden">
             <div class="quiz-container">
                 <div id="quiz-content"></div>
-
                 <div class="quiz-controls">
                     <button class="control-btn" id="btn-prev" onclick="prevQuestion()">上一題</button>
                     <span id="question-counter" style="line-height: 36px; color: #999;">1 / 10</span>
                     <button class="control-btn" id="btn-next" onclick="nextQuestion()">下一題</button>
                 </div>
             </div>
-            
             <div id="no-quiz-msg" class="hidden" style="text-align: center; margin-top: 50px; color: #777;">
-                此分類/年份目前尚無題目資料。<br>請匯入 CSV 資料。
+                此分類/年份目前尚無題目資料。
             </div>
         </div>
     </div>
 
     <script>
         // ==========================================
-        // 1. 資料庫 (從您提供的 CSV 轉換而來)
+        // 1. 資料庫 (114年 課程教學與評量 完整版)
         // ==========================================
         const questionsDB = [
-            {
-                "id": "114-curr-test-01",
-                "year": "114年",
-                "main": "課程教學與評量",
-                "sub": "教育測驗與評量",
-                "type": "choice",
-                "question": "李老師觀察學生課堂學習行為,並實施隨堂考試,即時分析學生學習情況以調整教學策略。此做法較屬於下列何種評量類型?",
-                "options": ["形成性評量", "總結性評量", "診斷性評量", "安置性評量"],
-                "answer": "A", // A=0, B=1, C=2, D=3
-                "explanation": "(A) 形成性評量\n-->在教學過程中進行，目的在於改進教學與促進學習。\n(B) 總結性評量\n-->單元/學期/課程結束時，用來判斷學習成果（例如期末考）。\n(C) 診斷性評量\n-->用於了解學生學習困難的原因\n(D) 安置性評量\n--用於決定學生的分組、程度、課程安排。\n\n故選(A)"
-            },
-            {
-                "id": "114-edu-soc-02",
-                "year": "114年",
-                "main": "教育理念與實務",
-                "sub": "教育社會學", // 註：原本 CSV 此欄空白，我根據內容自動歸類至社會學
-                "type": "mixed", // 非選擇題
-                "question": "2.傳統教育社會學認為,上層階級的學生透過學習「高雅文化」(如古典音樂等),獲得學校的認可,延續其階級優勢。然而,近代研究發現上層階級的學生不僅學習高雅文化,還欣賞「大眾文化」(如流行音樂等),展現出多元文化的參與能力。這種階級界線模糊化的現象稱為「文化雜食」(cultural omnivorousness),此概念強調多元與跨界,看似模糊階級界線,但這樣的跨域能力更會是優勢文化資本,並形成新的階級再製。\n\n(1)舉出在教育過程中,文化資本造成階級再製的兩項原因。(6分)\n(2)說明為何文化雜食本身可能是一種優勢的文化資本?(4分)",
-                "options": [],
-                "answer": "", // 非選擇題無標準單一答案，或可填入參考關鍵字
-                "explanation": "【參考詳解】\n(1) 文化資本造成階級再製的原因：\n- 學校課程內容傾向中上階級文化，對勞工階級學生不利。\n- 教師對不同階級學生的期望與互動方式不同。\n\n(2) 文化雜食作為優勢：\n- 擁有多元品味能適應不同社交場合，擴展社會資本。\n- 展現「包容性」與「高雅」並存的特質，成為新的菁英標記。"
-            }
-        ];
+  {
+    "id": "114-curr-01",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "課程",
+    "type": "choice",
+    "question": "星星中學推動性別平等教育時,在校園內展示性別平等的標語,並取消區分性別的服裝要求。此做法較屬於下列何種課程?",
+    "options": [
+      "空白課程",
+      "潛在課程",
+      "正式課程",
+      "空無課程"
+    ],
+    "answer": "B",
+    "explanation": "(A) 空白課程\n-->在校時間，空出一部分不規劃的課程，學生有機會從事其他活動，例如:下課時間\n(B) 潛在課程\n-->非正式課程，卻會對學生學習造成潛移默化的影響\n(C) 正式課程\n-->正是明訂的課程，例如:英文課\n(D) 空無課程\n-->學校應教而未教的課程"
+  },
+  {
+    "id": "114-curr-02",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教學",
+    "type": "choice",
+    "question": "下列何項敘述較符合差異化教學的原則與做法?",
+    "options": [
+      "以低成就學生的學習成效為主要考量",
+      "學生的先備知識並非焦點,教學的方法才是重點",
+      "以認知的差異化為主,可忽略情感和社交的差異化",
+      "依據學生的差異需求,調整教學內容、過程和評量"
+    ],
+    "answer": "D",
+    "explanation": "(A) 以低成就學生的學習成效為主要考量\n-->所有學生學習成效都須考量\n(B) 學生的先備知識並非焦點,教學的方法才是重點\n-->先備知識也是焦點之一，不可忽略\n(C) 以認知的差異化為主,可忽略情感和社交的差異化\n-->不可忽略\n(D) 依據學生的差異需求,調整教學內容、過程和評量"
+  },
+  {
+    "id": "114-curr-03",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教育測驗與評量",
+    "type": "choice",
+    "question": "李老師觀察學生課堂學習行為,並實施隨堂考試,即時分析學生學習情況以調整教學策略。此做法較屬於下列何種評量類型?",
+    "options": [
+      "形成性評量",
+      "總結性評量",
+      "診斷性評量",
+      "安置性評量"
+    ],
+    "answer": "A",
+    "explanation": "(A) 形成性評量\n-->在教學過程中進行，目的在於改進教學與促進學習。\n(B) 總結性評量\n-->單元/學期/課程結束時，用來判斷學習成果（例如期末考）。\n(C) 診斷性評量\n-->用於了解學生學習困難的原因\n(D) 安置性評量\n--用於決定學生的分組、程度、課程安排。"
+  },
+  {
+    "id": "114-curr-04",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "課程",
+    "type": "choice",
+    "question": "王老師觀察到學生感興趣的學習主題有所差異,而且偏好的學習方式也不盡相同。根據這些發現,他認為設計多元的學習內容與活動,應可滿足學生的不同學習需求。課程實施後,他蒐集學生的學習回饋與結果,以檢視其課程設計的想法是否達成。王老師的課程設計較符合何種課程的概念?",
+    "options": [
+      "課程即目標",
+      "課程即計畫",
+      "課程即經驗",
+      "課程即研究假設"
+    ],
+    "answer": "D",
+    "explanation": "(A) 課程即目標\n-->強調教育目的與目標\n(B) 課程即計畫\n-->即課程計畫，包含課程目標、學習內容、教學方法、活動與評鑑\n(C) 課程即經驗\n-->學生獲得的學習經驗\n(D) 課程即研究假設\n-->教師將教室當成實驗室，進行教學與研究\n題幹重點：\n王老師 觀察學生興趣與學習偏好 → 認為多元設計可滿足需求。\n課程實施後蒐集回饋 → 檢視自己的設計想法是否達成。\n這裡的核心其實是：課程設計本身帶有假設性，王老師假設「多元學習活動可滿足不同需求」，然後透過實施與回饋來驗證。\n課程即研究假設 (Curriculum as Hypothesis)：\n將課程視為一個 假設，實施後透過觀察、回饋來驗證是否成立。\n完全符合王老師「先觀察→設計假設→實施→檢視回饋」的流程。\n之前選「課程即經驗」偏重學生經驗的呈現，但題幹重點是 課程設計作為假設來檢驗，所以正確答案是 (D)。"
+  },
+  {
+    "id": "114-curr-05",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教學",
+    "type": "choice",
+    "question": "有關合作學習法的特點,下列敘述何者為非?",
+    "options": [
+      "重視組內成員之間的互動與相互依賴",
+      "可採異質分組,以促進同儕扶持進行學習活動",
+      "以全體組員的表現代表小組的成功,因此會抑制個人的學習",
+      "重視小組每一位成員在「人際技巧」和「團體歷程」的學習"
+    ],
+    "answer": "C",
+    "explanation": "(C) 以全體組員的表現代表小組的成功,因此會抑制個人的學習\n-->錯誤\n因為以全體組員的表現作計算，即重視每個人的進步表現，同組組員間也會互相幫助，協助彼此成長，故不會抑制個人學習。"
+  },
+  {
+    "id": "114-curr-06",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教育測驗與評量",
+    "type": "choice",
+    "question": "張同學認為要知道全班所有同學的成績,才能判斷自己的表現好不好。其對成績的看法較接近下列何種概念?",
+    "options": [
+      "常模參照",
+      "標準參照",
+      "效標參照",
+      "歷程參照"
+    ],
+    "answer": "A",
+    "explanation": "張同學的觀點是將自己的成績與其他同學進行排序\nㅤㅤ\n(A) 常模參照: 評量後，以個體在團體中的相對位置作為成績解釋\n(B) 標準參照: 根據標準，判別成績是否達到精熟\n(C) 效標參照: 即標準參照\n(D) 歷程參照: 著重個人學習與進步的歷程"
+  },
+  {
+    "id": "114-curr-07",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教學",
+    "type": "choice",
+    "question": "林老師與校內兩位老師共組跨領域教學團隊。三位老師先擬定教學目標與評量方式,共同進行大團體教學,之後由老師引導學生對共同問題進行小組討論,或進行獨立研究的個別指導。此做法較接近下列何者?",
+    "options": [
+      "協同教學",
+      "合作學習",
+      "直接教學",
+      "翻轉學習"
+    ],
+    "answer": "A",
+    "explanation": "題目關鍵為:共組跨領域教學團隊、共同進行大團體教學、而後進行個別指導\nㅤㅤ\n故符合(A)協同教學\n-----------------------------------------------------------------------------------------------------------------------------\n(B) 合作學習:簡而言之，學生以小組合作之方式進行學習\n(C) 直接教學:傳統教學，老師直接呈現學習內容\n(D) 翻轉學習:學生在課前先觀看預錄的課程內容，課堂上進行討論"
+  },
+  {
+    "id": "114-curr-08",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教學",
+    "type": "choice",
+    "question": "下列哪些是專題導向學習(project-based learning, PBL)的特色?\n甲、計畫和進度由教師決定\n乙、主題要貼近真實生活\n丙、過程中學生可習得新知能\n丁、結果須符合標準答案",
+    "options": [
+      "甲乙",
+      "甲丁",
+      "乙丙",
+      "丙丁"
+    ],
+    "answer": "C",
+    "explanation": "甲、計畫和進度由教師決定\n-->不完全由老師決定，老師負責引導、追蹤進度等\n丁、結果須符合標準答案\n-->PBL強調多元解決方式、評量方式、成果呈現等"
+  },
+  {
+    "id": "114-curr-09",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "課程",
+    "type": "choice",
+    "question": "課程設計應重視教學程序原則與師生互動,並強調學習者的主動學習。此觀點較符合下列何種模式?",
+    "options": [
+      "情境模式",
+      "歷程模式",
+      "目標模式",
+      "草根模式"
+    ],
+    "answer": "B",
+    "explanation": "(A) 情境模式：由 Skilbeck 提出，強調課程發展應先進行「情境分析」（分析學校內外部因素）。\n(B) 歷程模式：由 Stenhouse 提出，反對預先設定僵化的行為目標。它主張課程設計應關注「教學過程」中的師生互動、價值探究與智力發展，強調程序原則（Principles of Procedure）。\n(C) 目標模式：由 Tyler 提出，強調以目標為導向（目標→選擇→組織→評鑑），重視學習結果的行為改變。\n(D) 草根模式：由 Taba 提出，主張課程應由下而上（由教師）發展。"
+  },
+  {
+    "id": "114-curr-10",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "課程",
+    "type": "choice",
+    "question": "有關課程評鑑的概念,下列敘述何者正確?",
+    "options": [
+      "課程評鑑的目的最主要是對教師進行績效判斷",
+      "課程評鑑的範圍可依據課程的定義而有所不同",
+      "課程評鑑的過程通常客觀中立不涉及價值判斷",
+      "課程評鑑的人員必須是外部專家才具有公信力"
+    ],
+    "answer": "B",
+    "explanation": "(A) 課程評鑑的目的最主要是對教師進行績效判斷\n-->主要是檢視課程的適切性與價值性\n(C) 課程評鑑的過程通常客觀中立不涉及價值判斷\n-->涉及個人價值判斷\n(D) 課程評鑑的人員必須是外部專家才具有公信力\n-->可以是學校老師、學生、家長、外部專家等"
+  },
+  {
+    "id": "114-curr-11",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教育測驗與評量",
+    "type": "choice",
+    "question": "廖老師想藉由學生段考試卷的答題表現來瞭解試題的品質,根據下表所列的難度及鑑別度,哪一題的試題品質較需再重新檢視?<br><br><img src=\"https://img.yamol.tw/file/6853585de920e.jpg#s-407,159\" style=\"max-width:100%; height:auto; display:block; margin: 10px auto; border:1px solid #ccc; border-radius:5px;\">",
+    "options": [
+      "甲",
+      "乙",
+      "丙",
+      "丁"
+    ],
+    "answer": "D",
+    "explanation": "難度即為答對率，數值越大則表示題目越簡單、數值越小則題目越難，數值0.5時最佳\n鑑別度為高分組答對率-低分組答對率，數值越大鑑別度越高(數值0.4以上時為佳)"
+  },
+  {
+    "id": "114-curr-12",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "課程",
+    "type": "choice",
+    "question": "班克斯(J. Banks)的多元文化課程設計模式中,改變既有的課程結構,從不同族群、文化、宗教團體的立場探討相關議題,進而重構文化的概念與觀點。此做法屬於下列何者?",
+    "options": [
+      "貢獻取向",
+      "附加取向",
+      "轉化取向",
+      "行動取向"
+    ],
+    "answer": "C",
+    "explanation": "關鍵詞:改變既有的課程結構\nㅤㅤ\n(A) 貢獻取向\n-->在「特別假日、節慶或典禮」表揚特殊事蹟之人物\n(B) 附加取向\n-->「不」改變課程架構，在原有課程中加入特定族群議題等\n(C) 轉化取向\n-->改變課程架構，從不同族群角度和觀點進行探討\n(D) 行動取向\n-->在轉化取向上，再加入具體行動"
+  },
+  {
+    "id": "114-curr-13",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教育測驗與評量",
+    "type": "choice",
+    "question": "有關動態評量的敘述,下列哪些正確?\n甲、主要在評量學習內容的精熟\n乙、評量過程中教師可以進行提示\n丙、教師不宜介入提供指導,以確保評量客觀性\n丁、評量過程中鼓勵學生提問、主動請求協助",
+    "options": [
+      "甲乙",
+      "甲丙",
+      "乙丁",
+      "丙丁"
+    ],
+    "answer": "C",
+    "explanation": "甲、主要在評量學習內容的精熟\n-->透過互動過程，評量學生潛能與學習歷程\n丙、教師不宜介入提供指導,以確保評量客觀性\n-->應介入提供指導與協助"
+  },
+  {
+    "id": "114-curr-14",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "課程",
+    "type": "choice",
+    "question": "根據現行《十二年國民基本教育課程綱要總綱》,有關學校課程發展委員會之權責,下列敘述哪些正確?\n甲、發展學校本位課程\n乙、審查學生自主學習計畫\n丙、審議學校課程計畫\n丁、審議學校教科用書選用規定",
+    "options": [
+      "甲乙",
+      "甲丙",
+      "乙丁",
+      "丙丁"
+    ],
+    "answer": "B",
+    "explanation": "乙、審查學生自主學習計畫\n-->教師或輔導人員職責\n丁、審議學校教科用書選用規定\n-->校務會議決定"
+  },
+  {
+    "id": "114-curr-15",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "課程",
+    "type": "choice",
+    "question": "為整合在地特色,發展學校本位課程,下列做法何者較不適切?",
+    "options": [
+      "結合在地產業或文化特色,設計符合學生需求的專題探究課程",
+      "盤點學校歷年在地之教學活動,設計整合課程強調文化延續性",
+      "以鄰近學校的校本課程為範本,請學者專家設計學校本位課程",
+      "訪談社區人士對社區發展的建議,以社區和學校共榮發展課程"
+    ],
+    "answer": "C",
+    "explanation": "題目關鍵: 發展學校本位課程\nㅤㅤ\n(C) 以鄰近學校的校本課程為範本,請學者專家設計學校本位課程\n-->應以本校特色發展為主，而學者專家可以提供建議，而非直接設計"
+  },
+  {
+    "id": "114-curr-16",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "課程",
+    "type": "choice",
+    "question": "林老師針對國際糧食短缺問題,安排學生扮演各國領袖,讓學生思考面對全球問題的國家立場和決策考量,並進行模擬談判。此做法較符合下列何種課程設計取向?",
+    "options": [
+      "學科取向",
+      "科技取向",
+      "學生取向",
+      "社會取向"
+    ],
+    "answer": "D",
+    "explanation": "依題意，林老師的課程結合社會議題，故選(D)\nㅤㅤ\n(A) 學科取向\n-->重視知識體系，以學科學習內容為課程設計主軸\n(B) 科技取向\n-->強調科技應用\n(C) 學生取向\n-->以學生的需求為主\n(D) 社會取向\n-->分為社會重建與社會適應"
+  },
+  {
+    "id": "114-curr-17",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教學",
+    "type": "choice",
+    "question": "下列何種教學設計較能啟發學生的創意思考?\n甲、請學生說明造成食物浪費的原因\n乙、請學生提出有效減少食物浪費的三個方案\n丙、請學生評估同學提出的減少食物浪費方案並加以改良\n丁、請學生依關鍵字查找食物浪費的相關研究",
+    "options": [
+      "甲乙",
+      "甲丁",
+      "乙丙",
+      "丙丁"
+    ],
+    "answer": "C",
+    "explanation": "題目關鍵為:創意思考\nㅤㅤ\n因此教學設計之任務應讓學生自主發想可行之解決方案或觀點，而非有既定答案或是直接尋找答案之學習任務\nㅤㅤ"
+  },
+  {
+    "id": "114-curr-18",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教學",
+    "type": "choice",
+    "question": "吳老師讓學生在課前觀看影片並完成學習單,掌握相關概念。課堂中,學生以課前影片的內容為基礎,進行小組討論與實作活動,並將所學知識應用於實際情境。此做法較符合下列何者?",
+    "options": [
+      "翻轉學習",
+      "案例教學",
+      "設計思考教學",
+      "專題導向學習"
+    ],
+    "answer": "A",
+    "explanation": "(A) 翻轉學習 (Flipped Learning)：將傳統「課堂講授、回家作業」翻轉為「課前自學（看影片）、課堂實作討論」。題幹描述完全符合此定義 。\n(B) 案例教學：以特定案例為討論核心。\n(C) 設計思考：強調同理、定義、發想、原型、測試的流程。\n(D) 專題導向：以長期探究真實問題為主。"
+  },
+  {
+    "id": "114-curr-19",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "課程",
+    "type": "choice",
+    "question": "邱老師運用重理解的課程設計(Understanding by Design, UbD)發展「『震』面對決—居家減震行動方案」之課程單元。他在訂定課程目標後,接續之步驟應為下列何者?",
+    "options": [
+      "安排參觀九二一地震園區",
+      "評量學生對於居家減震的理解程度",
+      "規劃「趴下、掩護、穩住」的學習活動",
+      "訂定「居家減震行動方案」的評量內涵"
+    ],
+    "answer": "D",
+    "explanation": "課程設計理論中的 UbD（又稱三段逆向設計法） 的流程順序\nㅤㅤ\nUbD 課程設計三階段：\n1.確認目標（Identify Desired Results）\n　→ 明確學習重點、理解目標、核心問題\n2.決定可接受的證據（Determine Acceptable Evidence）\n　→ 規劃評量方式，判斷學生是否達成理解\n3.規劃學習活動（Plan Learning Experiences and Instruction）\n　→ 安排實作、練習、探索等教學活動"
+  },
+  {
+    "id": "114-curr-20",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教育測驗與評量",
+    "type": "choice",
+    "question": "下列何種做法較不能涵養學生後設認知能力?",
+    "options": [
+      "讓學生運用心智圖,整理繪製出學習單元的內容重點",
+      "讓學生規劃與執行專題探究,並自行監控與調整進度",
+      "讓學生選擇適合自己的解題策略,以解決複雜的問題",
+      "讓學生在學習過程中自評,並省思自己表現的優缺點"
+    ],
+    "answer": "A",
+    "explanation": "後設認知主要是指對自己學習監控的一項能力，而(A)重點仍在對於知識的學習能力"
+  },
+  {
+    "id": "114-curr-21",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "課程",
+    "type": "choice",
+    "question": "王老師進行「孔廟踏查」單元教學時,除了帶領學生踏查孔廟之外,也說明儒學於現代生活的應用。課後,學生表示踏查很好玩,但說不出學習的重點。此現象反映出哪些課程層次的落差?",
+    "options": [
+      "正式課程和運作課程",
+      "正式課程和知覺課程",
+      "知覺課程和經驗課程",
+      "運作課程和經驗課程"
+    ],
+    "answer": "D",
+    "explanation": "正式課程: 為政府機關或教育部門依法令，白紙黑字制定的課程\n運作課程: 老師實際操作運行的課程\n知覺課程: 老師或家長對課程內容的知覺\n經驗課程: 學生經驗到的運作課程\n\n題目中，「除了帶領學生踏查孔廟之外,也說明儒學於現代生活的應用。」為王老師實際操作的課程內容，屬於運作課程，「學生表示踏查很好玩,但說不出學習的重點。」，為學生的經驗及學生經驗到的感受，屬於經驗課程"
+  },
+  {
+    "id": "114-curr-22",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教學",
+    "type": "choice",
+    "question": "下表中所設計的評量重點,何者較能達成批判思考教學的目標?<br><br><img src=\"https://img.yamol.tw/file/68535879156ac.jpg#s-715,162\" style=\"max-width:100%; height:auto; display:block; margin: 10px auto; border:1px solid #ccc; border-radius:5px;\">",
+    "options": [
+      "甲乙",
+      "乙丙",
+      "丙丁",
+      "甲丁"
+    ],
+    "answer": "B",
+    "explanation": "題目關鍵為:批判性思考\nㅤㅤ\n乙、丙皆為思辨與批判性的教學活動，而甲、丁則屬於操作及資料統計能力運用的教學活動，不需要進行觀點批判與思辯，故選(B)"
+  },
+  {
+    "id": "114-curr-23",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教學",
+    "type": "choice",
+    "question": "張老師帶領學生前往陶藝工坊,安排他們在師傅的指導下實際參與製作過程。學生透過觀察師傅的操作,模仿製作技巧,並與師傅進行對話討論,掌握每個步驟的細節與設計背後的理念。此教學設計較符合下列何種學習理論?",
+    "options": [
+      "發現學習",
+      "情境學習",
+      "行為主義學習",
+      "人本主義學習"
+    ],
+    "answer": "B",
+    "explanation": "(A) 發現學習：Bruner 提出，強調學生主動探索以發現原理。\n(B) 情境學習 (Situated Learning)：Lave & Wenger 提出。強調學習發生在真實情境中，透過「合法的邊緣參與」(Legitimate Peripheral Participation)，新手在專家（師傅）的指導與示範下，逐漸掌握社群的技能與文化。題幹的師徒制即為典型案例 。\n(C) 行為主義：強調刺激-反應的連結與增強。\n(D) 人本主義：強調自我實現與情感。"
+  },
+  {
+    "id": "114-curr-24",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教學",
+    "type": "choice",
+    "question": "下列哪些做法較能培養學生問題解決能力?\n甲、讓學生記憶問題解決的制式化程序\n乙、讓學生評估問題解決的效果與過程\n丙、讓學生瞭解問題解決方案報告的撰寫格式\n丁、讓學生發掘生活中具挑戰且待解決的問題",
+    "options": [
+      "甲乙",
+      "甲丙",
+      "乙丁",
+      "丙丁"
+    ],
+    "answer": "C",
+    "explanation": "題目關鍵為「問題解決能力」\n甲、讓學生記憶問題解決的制式化程序\n-->公式化解法，無助於培養問題解決能力\n乙、讓學生評估問題解決的效果與過程\n-->培養批判性思考\n丁、讓學生發掘生活中具挑戰且待解決的問題\n-->培養問題覺察的能力"
+  },
+  {
+    "id": "114-curr-25",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教學",
+    "type": "choice",
+    "question": "陳老師引用時事進行社會情緒學習(social emotional learning, SEL)融入教學,內容是某網紅在社會重大事故後,於社群平台發文「好險我沒有遇到!」他請同學站在事故受害者及其親友的立場去思考看到該文的感受。陳老師的做法強調的是下列何種能力的培養?",
+    "options": [
+      "社會察覺",
+      "建立關係",
+      "人際技巧",
+      "承擔決定"
+    ],
+    "answer": "A",
+    "explanation": "CASEL 提出的 SEL 五大核心能力：\n1.自我覺察 (Self-awareness)\n2.自我管理 (Self-management)\n3.社會覺察 (Social awareness)：包含同理心、理解他人觀點、尊重多元。\n4.人際技巧 (Relationship skills)\n5.負責任的決策 (Responsible decision-making)\n解析：老師請同學「站在受害者立場思考感受」，這是典型的同理心練習，屬於 (A) 社會覺察"
+  },
+  {
+    "id": "114-curr-26",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "課程",
+    "type": "mixed",
+    "question": "何謂課程組織的「順序性」、「繼續性」及「統整性」(6分)?並舉出一個應用「統整性」課程組織的例子(4分)。",
+    "options": [],
+    "answer": "",
+    "explanation": "(1)順序性:課程內容應配合學生身心發展由易至難、由具體至抽象排列\n(2)繼續性:同一課程內容在不同年級重複出現並加深\n(3)統整性:課程融合不同學科知識\n(4)統整性課程組織例子-台灣觀光手冊:學生需要應用地理、美術等知識繪製觀光手冊，幫助學生活用自己所學之技能與知識"
+  },
+  {
+    "id": "114-curr-27",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教學",
+    "type": "mixed",
+    "question": "擬定教學計畫時,除考量課程主題、設計理念、學習目標外,還需納入哪些重要的元素?請寫出四項並分別說明考慮該元素的理由。(10分)",
+    "options": [],
+    "answer": "",
+    "explanation": "關鍵元素與理由（任選四項）：\n1.學習者分析：理由是為了進行差異化教學，了解學生先備知識與迷思概念。\n2.教學資源與媒體：理由是工欲善其事，必先利其器，合適的媒材（如平板、實物）能提升動機與理解。\n3.教學活動流程：理由是為了確保時間管理恰當，並安排合理的起承轉合（引起動機→發展活動→綜合活動）。\n4.教學評量方式：理由是為了檢核學習目標是否達成，並依據結果回饋教學。\n5.班級經營策略：理由是為了維持良性的學習環境，處理突發狀況。"
+  },
+  {
+    "id": "114-curr-28",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教育測驗與評量",
+    "type": "mixed",
+    "question": "吳老師打算運用檔案評量,以達成「學習結果的評量」、「促進學習的評量」、「評量即學習」這三種不同評量的目的。他的評量規畫如下表,請寫出表格中各評量類型相對應的目的及檔案評量做法(在答案卷中標註A、B、C、D,並分別寫出答案)。(10分)<br><br><img src=\"https://img.yamol.tw/file/68535896b9843.jpg#s-740,249\" style=\"max-width:100%; height:auto; display:block; margin: 10px auto; border:1px solid #ccc; border-radius:5px;\">",
+    "options": [],
+    "answer": "",
+    "explanation": "A:診斷學生學習狀況並提供學生回饋學習\nB:老師根據檔案資料，提供學生學習回饋，幫助學生進行學習策略修正\nC:培養學生自主學習及學習監控等後設認知能力\nD:透過撰寫個人心得、學生互評等方式，幫助學生對這段學習歷程進行反思"
+  },
+  {
+    "id": "114-curr-29",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教育測驗與評量",
+    "type": "mixed",
+    "question": "陳老師為青青高中自主學習的指導老師,下表是某位學生的自主學習計畫重點:<br><br><img src=\"https://img.yamol.tw/file/685358b7485ae.jpg\" style=\"max-width:100%; height:auto; display:block; margin: 10px auto; border:1px solid #ccc; border-radius:5px;\">\n陳老師想瞭解學生在該計畫執行後「自我反思與調整」能力的提升情形。請提出兩項提問,以引導學生反思自主學習的規畫、執行或結果。(4分)",
+    "options": [],
+    "answer": "",
+    "explanation": "1.在計畫完成後，你的時機進度和計畫有什麼不一樣的地方嗎？可能是什麼原因造成的？有哪些和你原先計畫時的想像不一樣？\n==>引導學生檢視自己計畫的制定以及執行之間的差異，了解自己實際的能力與執行力，藉此調整未來的學習計畫。\n2.最後的小論文結果呈現有沒有呈現你預料中的結果？還是有什麼新發現？\n==>引導學生思考自己實際學習到了什麼，是否有意料之外的收穫或是可以改進的地方。"
+  },
+  {
+    "id": "114-curr-30",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教學",
+    "type": "mixed",
+    "question": "陳老師為青青高中自主學習的指導老師,下表是某位學生的自主學習計畫重點:<br><br><img src=\"https://img.yamol.tw/file/685358b7485ae.jpg\" style=\"max-width:100%; height:auto; display:block; margin: 10px auto; border:1px solid #ccc; border-radius:5px;\">\n除了「自我反思與調整」能力以及「計畫的規畫、執行與管理」能力之外,請另寫出透過自主學習想要培養學生的兩種能力或態度,並說明理由。(6分)",
+    "options": [],
+    "answer": "",
+    "explanation": "自主學習計畫可培養學生以下能力:\n(1)批判性思考:學生能針對特定議題進行思考並嘗試用多元方法分析議題成因、影響等，有助於培養其批判性思考能力。\n(2)問題解決能力:學生可對真實生活中出現的議題提出解決方法，此外，在推行計畫的過程中，難免會遇到問題需要學生解決，是故從中可以訓練問題解決的能力。"
+  },
+  {
+    "id": "114-curr-31",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教學",
+    "type": "mixed",
+    "question": "幸福國中以「SDG11 永續城市」為主題開設彈性學習課程,教師提出的探究問題為「交通系統的設計如何影響城市的碳排放?」再讓學生分組設計資料蒐集方法進行探究。課程實施後,發現學生未能積極投入探究過程。\n探究教學類型包含開放性探究、引導性探究和結構性探究。請根據情境判斷該校彈性學習課程採用何種探究教學類型(2分)?並說明理由(2分)。",
+    "options": [],
+    "answer": "",
+    "explanation": "(1)此課程使用引導性探究。\n(2)原因:此課程設計屬於教師提出研究問題後，學生自由設計探究方法，故符合引導性探究之型態。"
+  },
+  {
+    "id": "114-curr-32",
+    "year": "114年",
+    "main": "課程教學與評量",
+    "sub": "教學",
+    "type": "mixed",
+    "question": "幸福國中以「SDG11 永續城市」為主題開設彈性學習課程,教師提出的探究問題為「交通系統的設計如何影響城市的碳排放?」再讓學生分組設計資料蒐集方法進行探究。課程實施後,發現學生未能積極投入探究過程。\n針對情境中「學生未能積極投入探究過程」的問題,分別從「教師教學」和「學生學習」兩方面,各提出兩項可能的成因。(6分)",
+    "options": [],
+    "answer": "",
+    "explanation": "以下可能是學生未能積極投入研究之原因:\n(1)教師教學:\n①教師未能進行充分引導:教師在教學過程中，可能因未充分進行引導，致使學生不知從何開始。\n②課程設計未能引起動機:此課程設計可能與學生生活間缺乏連結性，因此未能引起學生探究之動機。\n(2)學生學習:\n①不符合學生起點行為:學生因此主題過於困難或缺乏探究之能力，故而未能積極投入探究。\n②缺乏合作與溝通能力:學生間可能因工作分配不均、缺乏團隊溝通能力，而導致學生無法全心進行探究。"
+  }
+];
 
-        // 選單結構定義
+        // ==========================================
+        // 2. 應用程式核心邏輯
+        // ==========================================
         const structure = {
             "國語文能力測驗": [], 
             "教育理念與實務": ["教育的基本概念", "教育史學", "教育哲學", "教育社會學", "各國教育制度", "重要教育法規", "教育政策"],
@@ -308,13 +765,10 @@
             "課程教學與評量": ["課程", "教學", "教育測驗與評量"]
         };
 
-        // ==========================================
-        // 2. 狀態管理與核心變數
-        // ==========================================
         let historyStack = [];
         let currentSelections = { main: '', sub: '', year: '' };
-        let currentQuizList = []; // 當前篩選出來的題目列表
-        let currentQuestionIndex = 0; // 目前第幾題
+        let currentQuizList = []; 
+        let currentQuestionIndex = 0; 
 
         const views = {
             main: document.getElementById('view-main'),
@@ -325,9 +779,6 @@
         const navHeader = document.getElementById('nav-header');
         const breadcrumb = document.getElementById('breadcrumb');
 
-        // ==========================================
-        // 3. 初始化與導航邏輯
-        // ==========================================
         function init() {
             renderMain();
             switchView('main');
@@ -344,6 +795,7 @@
                 navHeader.style.display = 'flex';
                 updateBreadcrumb();
             }
+            window.scrollTo(0,0);
         }
 
         function updateBreadcrumb() {
@@ -372,9 +824,6 @@
             switchView(prevView);
         }
 
-        // ==========================================
-        // 4. 選單渲染 (主/次/年)
-        // ==========================================
         function renderMain() {
             const container = document.getElementById('main-list-container');
             container.innerHTML = ''; 
@@ -444,18 +893,13 @@
             container.appendChild(grid);
         }
 
-        // ==========================================
-        // 5. 作答系統核心
-        // ==========================================
         function prepareQuiz(year) {
             currentSelections.year = year;
             historyStack.push('year');
 
-            // 篩選題目
             currentQuizList = questionsDB.filter(q => {
                 const matchMain = q.main === currentSelections.main;
-                // 若子分類在 JSON 中有填寫，則需匹配；若選單是特殊情況則忽略
-                // 這裡簡化邏輯：比對 SubCategory
+                // 寬鬆比對：只要 sub 相同，或 sub 是 main 的一部份
                 const matchSub = (currentSelections.sub === q.main) || (q.sub === currentSelections.sub); 
                 const matchYear = (year === '全部年份') || (q.year === year);
                 
@@ -482,26 +926,23 @@
             noMsg.classList.add('hidden');
             controls.style.display = 'flex';
             
-            // 渲染當前題目
             const q = currentQuizList[currentQuestionIndex];
             renderQuestion(q, contentDiv);
             updateControls();
         }
 
         function renderQuestion(q, container) {
-            // 題目標籤 (年份 + 題型)
             let typeLabel = q.type === 'choice' ? '選擇題' : '非選題';
             let html = `
                 <div class="quiz-meta">
                     <span>${q.year}</span>
                     <span>${typeLabel}</span>
                 </div>
-                <div class="question-text">${q.question}</div>
+                <div class="question-text" data-id="${q.id}">${q.question}</div>
             `;
 
-            // 根據題型渲染選項
             if (q.type === 'choice') {
-                html += `<div id="options-area">`;
+                html += `<div id="options-area" data-answered="false">`;
                 const labels = ['A', 'B', 'C', 'D'];
                 q.options.forEach((opt, idx) => {
                     html += `
@@ -513,13 +954,11 @@
                 });
                 html += `</div>`;
             } else {
-                // 非選擇題
                 html += `
                     <button class="show-ans-btn" onclick="toggleExplanation()">觀看參考詳解</button>
                 `;
             }
 
-            // 解析區塊 (預設隱藏)
             html += `
                 <div id="explanation-area" class="explanation-box hidden">
                     <strong>解析：</strong><br>
@@ -530,9 +969,7 @@
             container.innerHTML = html;
         }
 
-        // 檢查答案 (選擇題)
         window.checkAnswer = function(btn, userOpt, correctOpt) {
-            // 避免重複點擊
             const parent = btn.parentElement;
             if (parent.dataset.answered === 'true') return;
             parent.dataset.answered = 'true';
@@ -544,30 +981,28 @@
                 btn.classList.add('correct');
             } else {
                 btn.classList.add('wrong');
-                // 顯示正確答案
                 const correctIndex = ['A','B','C','D'].indexOf(correctOpt);
-                if (correctIndex !== -1) allBtns[correctIndex].classList.add('correct');
+                if (correctIndex !== -1 && allBtns[correctIndex]) {
+                    allBtns[correctIndex].classList.add('correct');
+                }
             }
             
-            // 顯示解析
             explArea.classList.remove('hidden');
         }
 
-        // 顯示/隱藏解析 (非選擇題)
         window.toggleExplanation = function() {
             const el = document.getElementById('explanation-area');
             el.classList.toggle('hidden');
         }
 
-        // 上一題/下一題
-        function nextQuestion() {
+        window.nextQuestion = function() {
             if (currentQuestionIndex < currentQuizList.length - 1) {
                 currentQuestionIndex++;
                 renderQuizUI();
             }
         }
 
-        function prevQuestion() {
+        window.prevQuestion = function() {
             if (currentQuestionIndex > 0) {
                 currentQuestionIndex--;
                 renderQuizUI();
