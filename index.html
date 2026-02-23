@@ -64,21 +64,66 @@
             text-overflow: ellipsis;
         }
 
-        /* --- 列表與網格樣式 --- */
+        /* --- 列表與進度條樣式 --- */
         .list-card {
             background: var(--white);
             border-radius: 12px;
-            padding: 20px;
+            padding: 15px 20px;
             margin-bottom: 12px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.03);
             cursor: pointer;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column; 
             transition: transform 0.1s;
         }
         .list-card:active { transform: scale(0.98); background: #fafafa; }
+        
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
         .list-card-title { font-weight: 600; font-size: 1.05rem; }
+
+        /* 重設進度按鈕 */
+        .reset-btn {
+            background: transparent;
+            border: 1px solid var(--error);
+            color: var(--error);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .reset-btn:hover {
+            background: var(--error);
+            color: white;
+        }
+
+        .progress-container {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .progress-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--success);
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            font-size: 0.75rem;
+            color: #999;
+            text-align: right;
+            margin-top: 4px;
+        }
 
         .year-section-title {
             margin: 20px 0 10px 0;
@@ -108,7 +153,7 @@
         .year-btn:active { background: var(--primary); color: white; }
         .year-btn.all-years { grid-column: span 3; background: var(--secondary); color: white; }
 
-        /* --- 設定頁面樣式 --- */
+        /* --- 設定與登入頁面樣式 --- */
         .settings-card {
             background: var(--white);
             border-radius: 12px;
@@ -116,84 +161,45 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
         
-        .setting-group {
-            margin-bottom: 25px;
-        }
+        .setting-group { margin-bottom: 25px; }
+        .setting-label { display: block; font-weight: 600; margin-bottom: 10px; color: #555; }
         
-        .setting-label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #555;
-        }
-        
-        .radio-group {
-            display: flex;
-            gap: 15px;
-        }
-        
+        .radio-group { display: flex; gap: 15px; }
         .radio-label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            padding: 8px 12px;
-            border: 1px solid #eee;
-            border-radius: 6px;
+            display: flex; align-items: center; cursor: pointer;
+            padding: 8px 12px; border: 1px solid #eee; border-radius: 6px;
             transition: all 0.2s;
         }
-        
         .radio-label:hover { background: #f9f9f9; }
         .radio-label input { margin-right: 8px; }
 
-        .number-input-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
+        .number-input-group { display: flex; align-items: center; gap: 10px; }
         .number-input {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            width: 80px;
-            font-size: 1rem;
-            text-align: center;
+            padding: 10px; border: 1px solid #ccc; border-radius: 6px;
+            width: 80px; font-size: 1rem; text-align: center;
+        }
+        .text-input {
+            padding: 12px; border: 1px solid #ccc; border-radius: 6px;
+            width: 100%; font-size: 1rem; text-align: center; box-sizing: border-box;
         }
 
         .quick-btn {
-            padding: 6px 12px;
-            background: #eee;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            color: #666;
+            padding: 6px 12px; background: #eee; border: none;
+            border-radius: 4px; cursor: pointer; font-size: 0.9rem; color: #666;
         }
         .quick-btn:hover { background: #e0e0e0; }
 
         .start-btn {
-            width: 100%;
-            padding: 15px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
+            width: 100%; padding: 15px; background: var(--primary);
+            color: white; border: none; border-radius: 8px; font-size: 1.1rem;
+            font-weight: bold; cursor: pointer; margin-top: 10px;
             box-shadow: 0 4px 6px rgba(74, 144, 226, 0.3);
         }
         .start-btn:active { transform: scale(0.98); }
 
         .stat-info {
-            background: #e3f2fd;
-            color: #1565c0;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            margin-bottom: 20px;
-            text-align: center;
+            background: #e3f2fd; color: #1565c0; padding: 10px;
+            border-radius: 6px; font-size: 0.9rem; margin-bottom: 20px; text-align: center;
         }
 
         /* --- 作答區樣式 --- */
@@ -207,62 +213,32 @@
         }
 
         .quiz-meta {
-            font-size: 0.85rem;
-            color: #999;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
+            font-size: 0.85rem; color: #999; margin-bottom: 15px;
+            display: flex; justify-content: space-between;
         }
 
         .question-text {
-            font-size: 1.1rem;
-            font-weight: 600;
-            line-height: 1.6;
-            margin-bottom: 25px;
-            color: #2c3e50;
-            white-space: pre-wrap;
+            font-size: 1.1rem; font-weight: 600; line-height: 1.6;
+            margin-bottom: 25px; color: #2c3e50; white-space: pre-wrap;
         }
         
-        /* 圖片自適應設定 */
         .question-text img {
-            max-width: 100% !important;
-            height: auto !important;
-            display: block;
-            margin: 10px auto;
-            border-radius: 8px;
-            border: 1px solid #eee;
+            max-width: 100% !important; height: auto !important;
+            display: block; margin: 10px auto; border-radius: 8px; border: 1px solid #eee;
         }
 
-        /* 選項按鈕 */
         .option-btn {
-            width: 100%;
-            padding: 15px;
-            margin-bottom: 12px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            background: #fff;
-            text-align: left;
-            font-size: 1rem;
-            color: #444;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
+            width: 100%; padding: 15px; margin-bottom: 12px;
+            border: 1px solid #e0e0e0; border-radius: 8px; background: #fff;
+            text-align: left; font-size: 1rem; color: #444; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center;
         }
         
         .option-tag {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #eee;
-            color: #666;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            margin-right: 12px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            flex-shrink: 0;
+            width: 24px; height: 24px; border-radius: 50%; background: #eee;
+            color: #666; display: inline-flex; justify-content: center;
+            align-items: center; margin-right: 12px; font-size: 0.8rem;
+            font-weight: bold; flex-shrink: 0;
         }
 
         .option-btn.correct { background: #e8f8f5; border-color: var(--success); color: var(--success); }
@@ -271,65 +247,59 @@
         .option-btn.wrong { background: #fdedec; border-color: var(--error); color: var(--error); }
         .option-btn.wrong .option-tag { background: var(--error); color: white; }
 
-        /* 解析區塊 */
         .explanation-box {
-            margin-top: 20px;
-            padding: 15px;
-            background: #fff8e1;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            color: #5d4037;
-            border-left: 4px solid #ffca28;
-            white-space: pre-line; 
-            word-break: break-word; 
-            width: 100%;
-            box-sizing: border-box;
+            margin-top: 20px; padding: 15px; background: #fff8e1;
+            border-radius: 8px; font-size: 0.95rem; line-height: 1.6;
+            color: #5d4037; border-left: 4px solid #ffca28;
+            white-space: pre-line; word-break: break-word; width: 100%; box-sizing: border-box;
         }
 
         .quiz-controls {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
+            display: flex; justify-content: space-between; margin-top: 20px;
+            padding-top: 15px; border-top: 1px solid #eee;
         }
         
         .control-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            background: var(--primary);
-            color: white;
-            font-size: 0.9rem;
-            cursor: pointer;
+            padding: 10px 20px; border: none; border-radius: 6px;
+            background: var(--primary); color: white; font-size: 0.9rem; cursor: pointer;
         }
         .control-btn:disabled { background: #ccc; cursor: not-allowed; }
 
         .show-ans-btn {
-            width: 100%;
-            padding: 12px;
-            background: var(--secondary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-bottom: 10px;
+            width: 100%; padding: 12px; background: var(--secondary);
+            color: white; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px;
         }
 
-        .hidden { display: none; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
     <div id="app-container">
+        
+        <!-- 登入視圖 -->
+        <div id="view-login" class="settings-card" style="margin-top: 10vh;">
+            <h2 style="margin-top:0; margin-bottom: 10px; text-align:center; color: var(--primary);">教檢考古題複習系統</h2>
+            <p style="text-align:center; color: #777; font-size: 0.9rem; margin-bottom: 25px;">請輸入您的使用者名稱，系統將自動同步並儲存您的作答進度。</p>
+            
+            <div class="setting-group" style="text-align: center;">
+                <input type="text" id="username-input" class="text-input" placeholder="例如：李小明、Teacher01" onkeypress="if(event.key === 'Enter') login()">
+                <div id="login-error" style="color: var(--error); font-size: 0.85rem; margin-top: 8px; display: none;">請輸入有效的使用者名稱</div>
+            </div>
+            
+            <button class="start-btn" onclick="login()">進入系統</button>
+        </div>
+
         <div id="nav-header" class="nav-header">
             <button class="back-btn" onclick="goBack()">❮ 返回</button>
             <span id="breadcrumb" class="breadcrumb"></span>
         </div>
 
-        <div id="view-main">
-            <h2 style="margin-bottom: 20px; color: #444; padding-left: 5px;">請選擇測驗領域</h2>
+        <div id="view-main" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-left: 5px;">
+                <h2 style="margin: 0; color: #444;">請選擇測驗領域</h2>
+                <div id="display-username" style="font-size: 0.85rem; color: var(--primary); background: #e3f2fd; padding: 4px 10px; border-radius: 12px; font-weight: bold;"></div>
+            </div>
             <div id="main-list-container"></div>
         </div>
 
@@ -344,14 +314,12 @@
             <div id="year-grid-container"></div>
         </div>
 
-        <!-- 新增：測驗設定視圖 -->
+        <!-- 測驗設定視圖 -->
         <div id="view-settings" class="hidden">
             <div class="settings-card">
                 <h3 style="margin-top:0; margin-bottom: 20px; text-align:center;">自定義隨機測驗</h3>
                 
-                <div id="settings-stat" class="stat-info">
-                    目前題庫共有 0 題
-                </div>
+                <div id="settings-stat" class="stat-info">目前題庫共有 0 題</div>
 
                 <div class="setting-group">
                     <label class="setting-label">題目類型</label>
@@ -381,6 +349,10 @@
                     </div>
                 </div>
 
+                <div style="font-size: 0.85rem; color: #888; margin-bottom: 15px; text-align: center;">
+                    💡 系統將優先抽取「尚未答對」及「從未作答」的題目
+                </div>
+
                 <button class="start-btn" onclick="startRandomQuiz()">開始測驗</button>
             </div>
         </div>
@@ -400,7 +372,12 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ※ 實際使用時請確保保留完整的所有題目資料，此處僅放一題作為示意結構 ※
         const questionsDB = [
             // --- 114年 課程教學與評量 ---
             {
@@ -32793,9 +32770,11 @@
         let currentSelections = { main: '', sub: '', year: '' };
         let currentQuizList = []; 
         let currentQuestionIndex = 0; 
-        let availableQuestionsPool = []; // 用於設定頁面計算
+        let availableQuestionsPool = []; 
+        let currentUsername = '';
 
         const views = {
+            login: document.getElementById('view-login'),
             main: document.getElementById('view-main'),
             sub: document.getElementById('view-sub'),
             year: document.getElementById('view-year'),
@@ -32805,19 +32784,116 @@
         const navHeader = document.getElementById('nav-header');
         const breadcrumb = document.getElementById('breadcrumb');
 
-        function init() {
-            renderMain();
-            switchView('main');
+        // --- Firebase 雲端環境變數 ---
+        let globalProgress = {}; 
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        let db = null;
+        let currentUser = null;
+        let progressUnsubscribe = null;
+
+        window.loadProgress = function() {
+            return globalProgress;
+        }
+
+        window.saveProgress = async function(id, status) {
+            if (status === 'correct' || status === 'reviewed' || !globalProgress[id]) {
+                globalProgress[id] = status; 
+                
+                // 1. 本機雙重備份
+                try {
+                    localStorage.setItem('progress_' + currentUsername, JSON.stringify(globalProgress));
+                } catch(e) {}
+                
+                // 2. 雲端同步 (防抖機制)
+                if (currentUser && db && currentUsername) {
+                    try {
+                        const safeName = encodeURIComponent(currentUsername);
+                        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'userProgress', safeName);
+                        
+                        clearTimeout(window.saveTimeout);
+                        window.saveTimeout = setTimeout(async () => {
+                            await setDoc(docRef, globalProgress, { merge: true });
+                        }, 500);
+                    } catch(e) {
+                        console.error("雲端存檔失敗:", e);
+                    }
+                }
+            }
+        }
+
+        // --- 新增：重設特定類別作答紀錄的函式 ---
+        window.resetCategoryProgress = async function(categoryName, isMain) {
+            if (!confirm(`確定要將「${categoryName}」的進度歸零嗎？此動作無法復原。`)) return;
+
+            const qsToReset = questionsDB.filter(q => {
+                if (isMain) return q.main === categoryName;
+                return q.main === currentSelections.main && q.sub === categoryName;
+            });
+
+            let changed = false;
+            qsToReset.forEach(q => {
+                if (globalProgress[q.id]) {
+                    delete globalProgress[q.id];
+                    changed = true;
+                }
+            });
+
+            if (changed) {
+                // 1. 更新本機儲存
+                try {
+                    localStorage.setItem('progress_' + currentUsername, JSON.stringify(globalProgress));
+                } catch(e) {}
+                
+                // 2. 覆寫雲端儲存 (刪除鍵值需透過覆寫完整文件)
+                if (currentUser && db && currentUsername) {
+                    try {
+                        const safeName = encodeURIComponent(currentUsername);
+                        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'userProgress', safeName);
+                        await setDoc(docRef, globalProgress); 
+                    } catch(e) {
+                        console.error("雲端重設失敗:", e);
+                    }
+                }
+
+                // 更新畫面
+                if (isMain) {
+                    renderMain();
+                } else {
+                    renderSub(structure[currentSelections.main]);
+                }
+            }
+        }
+
+        function getCategoryProgress(mainCat, subCat = null) {
+            const filteredQs = questionsDB.filter(q => q.main === mainCat && (!subCat || q.sub === subCat));
+            if (filteredQs.length === 0) return { percent: 0, text: '0 / 0' };
+            
+            const prog = window.loadProgress();
+            let completed = 0;
+            
+            filteredQs.forEach(q => {
+                if (prog[q.id] === 'correct' || prog[q.id] === 'reviewed') {
+                    completed++;
+                }
+            });
+            
+            const percent = Math.round((completed / filteredQs.length) * 100);
+            return { percent, text: `${completed} / ${filteredQs.length}` };
         }
 
         function switchView(viewId) {
-            Object.values(views).forEach(el => el.classList.add('hidden'));
-            views[viewId].classList.remove('hidden');
+            Object.values(views).forEach(el => el && el.classList.add('hidden'));
+            if (views[viewId]) views[viewId].classList.remove('hidden');
 
-            if (viewId === 'main') {
+            if (viewId === 'main' || viewId === 'login') {
+                navHeader.classList.add('hidden');
                 navHeader.style.display = 'none';
-                historyStack = [];
+                if (viewId === 'main') {
+                    historyStack = [];
+                    renderMain(); 
+                }
             } else {
+                navHeader.classList.remove('hidden');
                 navHeader.style.display = 'flex';
                 updateBreadcrumb();
             }
@@ -32835,18 +32911,16 @@
             breadcrumb.innerText = text;
         }
 
-        function goBack() {
+        window.goBack = function() {
             if (historyStack.length === 0) return;
             const prevView = historyStack.pop();
             
             if (prevView === 'year') currentSelections.year = '';
-            if (prevView === 'settings') {
-                // 如果從設定頁返回，通常是回到年份選擇
-                // 但因為 settings 是從 year 進去的，所以 pop 之後應該是 year
-            }
+            if (prevView === 'settings') { }
             if (prevView === 'sub') {
                 currentSelections.sub = '';
                 currentSelections.year = '';
+                renderSub(structure[currentSelections.main]); 
             }
             if (prevView === 'main') {
                 currentSelections = { main: '', sub: '', year: '' };
@@ -32854,11 +32928,69 @@
             switchView(prevView);
         }
 
+        // --- 登入邏輯 ---
+        window.login = function() {
+            const input = document.getElementById('username-input').value.trim();
+            const err = document.getElementById('login-error');
+            if (!input) {
+                err.style.display = 'block';
+                return;
+            }
+            err.style.display = 'none';
+            currentUsername = input;
+            
+            // 嘗試快取名稱與本機進度
+            try { 
+                localStorage.setItem('eduQuizUser', currentUsername); 
+                const localData = localStorage.getItem('progress_' + currentUsername);
+                if (localData) {
+                    globalProgress = JSON.parse(localData);
+                } else {
+                    globalProgress = {};
+                }
+            } catch(e){ globalProgress = {}; }
+
+            document.getElementById('display-username').innerText = `👤 ${currentUsername}`;
+
+            if (currentUser && db) {
+                setupUserProgressListener(currentUsername);
+            }
+
+            switchView('main');
+        }
+
+        function setupUserProgressListener(username) {
+            if (progressUnsubscribe) progressUnsubscribe();
+            
+            const safeName = encodeURIComponent(username);
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'userProgress', safeName);
+            progressUnsubscribe = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    // 合併雲端與本機資料
+                    globalProgress = { ...globalProgress, ...docSnap.data() };
+                    try { localStorage.setItem('progress_' + username, JSON.stringify(globalProgress)); } catch(e){}
+                } else {
+                    // 若雲端無資料，維持本機資料
+                }
+                
+                // 動態更新進度條畫面
+                if (currentSelections.year === '' && !views.main.classList.contains('hidden')) {
+                    renderMain();
+                } else if (currentSelections.year === '' && currentSelections.sub !== '' && !views.sub.classList.contains('hidden')) {
+                    renderSub(structure[currentSelections.main]);
+                }
+            }, (error) => {
+                console.error("Firestore 監聽失敗:", error);
+            });
+        }
+
+        // --- 修改：傳遞 isMain 布林值至 createCard ---
         function renderMain() {
             const container = document.getElementById('main-list-container');
             container.innerHTML = ''; 
             Object.keys(structure).forEach(key => {
-                const card = createCard(key, () => handleMainClick(key));
+                const progData = getCategoryProgress(key);
+                const card = createCard(key, progData, true, () => handleMainClick(key));
                 container.appendChild(card);
             });
         }
@@ -32881,7 +33013,8 @@
             const container = document.getElementById('sub-list');
             container.innerHTML = '';
             items.forEach(item => {
-                const card = createCard(item, () => {
+                const progData = getCategoryProgress(currentSelections.main, item);
+                const card = createCard(item, progData, false, () => {
                     currentSelections.sub = item;
                     historyStack.push('sub');
                     renderYear();
@@ -32899,14 +33032,11 @@
             const allBtn = document.createElement('div');
             allBtn.className = 'year-btn all-years';
             allBtn.innerText = '全部年份 (自訂測驗)';
-            // 修改：點擊全部年份進入設定頁面
             allBtn.onclick = () => showSettings();
             container.appendChild(allBtn);
 
             createYearSection(container, '新制時期 (110–114)', 114, 110);
             
-            // 舊制時期 (改為自定義清單)
-            // 順序：109 -> 108-2 -> 108-1 -> 106 -> ... -> 94 (跳過 107)
             const oldYears = ['109年', '108年-2', '108年-1'];
             for (let y = 106; y >= 94; y--) {
                 oldYears.push(y + '年');
@@ -32950,31 +33080,27 @@
             container.appendChild(grid);
         }
 
-        // --- 新增：顯示設定頁面 ---
-        function showSettings() {
+        window.showSettings = function() {
             currentSelections.year = '隨機測驗';
             historyStack.push('year');
             
-            // 先篩選出目前分類下的所有題目
             availableQuestionsPool = questionsDB.filter(q => {
                 const matchMain = q.main === currentSelections.main;
                 const matchSub = (currentSelections.sub === q.main) || (q.sub === currentSelections.sub);
                 return matchMain && matchSub;
             });
             
-            updateSettingsStat();
+            window.updateSettingsStat();
             switchView('settings');
         }
 
-        // --- 新增：更新設定頁面的統計資訊 ---
-        function updateSettingsStat() {
+        window.updateSettingsStat = function() {
             const typeEls = document.getElementsByName('quizType');
             let selectedType = 'all';
             for(let el of typeEls) {
                 if(el.checked) selectedType = el.value;
             }
 
-            // 根據類型篩選可用題數
             const filteredPool = availableQuestionsPool.filter(q => {
                 if(selectedType === 'all') return true;
                 if(selectedType === 'choice') return q.type === 'choice';
@@ -32985,7 +33111,6 @@
             document.getElementById('settings-stat').innerText = 
                 `目前分類下，符合「${getTypeLabel(selectedType)}」的題目共有 ${filteredPool.length} 題`;
             
-            // 設定 input max 值
             const input = document.getElementById('quizCount');
             input.max = filteredPool.length;
             if(parseInt(input.value) > filteredPool.length) {
@@ -32999,7 +33124,7 @@
             return '非選題';
         }
 
-        function setCount(val) {
+        window.setCount = function(val) {
             const input = document.getElementById('quizCount');
             if(val === 'all') {
                 input.value = input.max;
@@ -33008,40 +33133,50 @@
             }
         }
 
-        // --- 新增：開始隨機測驗 ---
-        function startRandomQuiz() {
+        window.startRandomQuiz = function() {
             const typeEls = document.getElementsByName('quizType');
             let selectedType = 'all';
             for(let el of typeEls) if(el.checked) selectedType = el.value;
             
             let count = parseInt(document.getElementById('quizCount').value) || 20;
+            const prog = window.loadProgress();
 
-            // 1. 篩選類型
             let pool = availableQuestionsPool.filter(q => {
                 if(selectedType === 'all') return true;
                 if(selectedType === 'choice') return q.type === 'choice';
-                if(selectedType === 'mixed') return q.type !== 'choice'; // 假設非 choice 即為 mixed
+                if(selectedType === 'mixed') return q.type !== 'choice'; 
                 return true;
             });
 
-            // 2. 隨機洗牌 (Fisher-Yates Shuffle)
-            for (let i = pool.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [pool[i], pool[j]] = [pool[j], pool[i]];
+            const priorityPool = [];
+            const secondaryPool = [];
+
+            pool.forEach(q => {
+                if (prog[q.id] === 'correct' || prog[q.id] === 'reviewed') {
+                    secondaryPool.push(q);
+                } else {
+                    priorityPool.push(q);
+                }
+            });
+
+            function shuffleArray(arr) {
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
             }
 
-            // 3. 截取指定數量
-            currentQuizList = pool.slice(0, count);
-            
-            // 4. 開始作答
+            shuffleArray(priorityPool);
+            shuffleArray(secondaryPool);
+            const combinedPool = [...priorityPool, ...secondaryPool];
+
+            currentQuizList = combinedPool.slice(0, count);
             currentQuestionIndex = 0;
-            // 記錄狀態讓 breadcrumb 顯示
-            historyStack.push('settings'); // 把 settings 壓入歷史，這樣按返回會回到 settings
+            historyStack.push('settings'); 
             renderQuizUI();
             switchView('quiz');
         }
 
-        // 原本的單一年份測驗邏輯
         function prepareQuiz(year) {
             currentSelections.year = year;
             historyStack.push('year');
@@ -33050,7 +33185,6 @@
                 const matchMain = q.main === currentSelections.main;
                 const matchSub = (currentSelections.sub === q.main) || (q.sub === currentSelections.sub); 
                 const matchYear = (year === '全部年份') || (q.year === year);
-                
                 return matchMain && matchSub && matchYear;
             });
 
@@ -33094,7 +33228,7 @@
                 const labels = ['A', 'B', 'C', 'D','E'];
                 q.options.forEach((opt, idx) => {
                     html += `
-                        <button class="option-btn" onclick="checkAnswer(this, '${labels[idx]}', '${q.answer}')">
+                        <button class="option-btn" onclick="checkAnswer(this, '${q.id}', '${labels[idx]}', '${q.answer}')">
                             <span class="option-tag">${labels[idx]}</span>
                             ${opt}
                         </button>
@@ -33103,7 +33237,7 @@
                 html += `</div>`;
             } else {
                 html += `
-                    <button class="show-ans-btn" onclick="toggleExplanation()">觀看參考詳解</button>
+                    <button class="show-ans-btn" onclick="markReviewedAndToggle('${q.id}')">觀看參考詳解</button>
                 `;
             }
 
@@ -33117,7 +33251,7 @@
             container.innerHTML = html;
         }
 
-        window.checkAnswer = function(btn, userOpt, correctOpt) {
+        window.checkAnswer = function(btn, qId, userOpt, correctOpt) {
             const parent = btn.parentElement;
             if (parent.dataset.answered === 'true') return;
             parent.dataset.answered = 'true';
@@ -33125,7 +33259,10 @@
             const explArea = document.getElementById('explanation-area');
             const allBtns = parent.querySelectorAll('.option-btn');
 
-            if (userOpt === correctOpt) {
+            let isCorrect = userOpt === correctOpt;
+            window.saveProgress(qId, isCorrect ? 'correct' : 'wrong');
+
+            if (isCorrect) {
                 btn.classList.add('correct');
             } else {
                 btn.classList.add('wrong');
@@ -33136,6 +33273,12 @@
             }
             
             explArea.classList.remove('hidden');
+        }
+
+        window.markReviewedAndToggle = function(qId) {
+            window.saveProgress(qId, 'reviewed');
+            const el = document.getElementById('explanation-area');
+            el.classList.toggle('hidden');
         }
 
         window.toggleExplanation = function() {
@@ -33164,12 +33307,69 @@
             document.getElementById('btn-next').disabled = (currentQuestionIndex === currentQuizList.length - 1);
         }
 
-        function createCard(text, onClick) {
+        // --- 修改：加入 isMain 參數，並繪製重設按鈕 ---
+        function createCard(text, progData, isMain, onClick) {
             const div = document.createElement('div');
             div.className = 'list-card';
-            div.innerHTML = `<span class="list-card-title">${text}</span><span style="color:#ccc">›</span>`;
+            
+            div.innerHTML = `
+                <div class="card-top">
+                    <span class="list-card-title">${text}</span>
+                    <div style="display:flex; align-items:center;">
+                        <button class="reset-btn" onclick="event.stopPropagation(); window.resetCategoryProgress('${text}', ${isMain})">重設</button>
+                        <span style="color:#ccc; margin-left: 10px; font-size: 1.2rem;">›</span>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: ${progData.percent}%"></div>
+                    </div>
+                    <div class="progress-text">${progData.percent}% (${progData.text})</div>
+                </div>
+            `;
             div.onclick = onClick;
             return div;
+        }
+
+        const initFirebase = async () => {
+            let firebaseConfig = null;
+            try {
+                if (typeof __firebase_config !== 'undefined') {
+                    firebaseConfig = JSON.parse(__firebase_config);
+                }
+            } catch(e) {}
+            
+            if (!firebaseConfig) return;
+
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            db = getFirestore(app);
+
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    currentUser = user;
+                    if (currentUsername) {
+                        setupUserProgressListener(currentUsername);
+                    }
+                }
+            });
+        };
+
+        function init() {
+            initFirebase();
+            
+            try {
+                const savedUser = localStorage.getItem('eduQuizUser');
+                if (savedUser) document.getElementById('username-input').value = savedUser;
+            } catch(e){}
+
+            switchView('login');
         }
 
         init();
