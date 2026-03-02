@@ -280,7 +280,10 @@
         <!-- 登入視圖 -->
         <div id="view-login" class="settings-card" style="margin-top: 10vh;">
             <h2 style="margin-top:0; margin-bottom: 10px; text-align:center; color: var(--primary);">教檢考古題複習系統</h2>
-            <p style="text-align:center; color: #777; font-size: 0.9rem; margin-bottom: 25px;">請輸入您的使用者名稱，系統將自動同步並儲存您的作答進度。</p>
+            <p style="text-align:center; color: #777; font-size: 0.9rem; margin-bottom: 10px;">請輸入您的使用者名稱，系統將自動同步並儲存您的作答進度。</p>
+            <p style="text-align:center; color: var(--primary); font-size: 0.85rem; font-weight: bold; margin-bottom: 25px; background: #e3f2fd; padding: 8px; border-radius: 6px;">
+                💡 跨裝置同步秘訣：請將「當前網頁的網址」複製到其他裝置開啟，才能連線至同一個資料庫！
+            </p>
             
             <div class="setting-group" style="text-align: center;">
                 <input type="text" id="username-input" class="text-input" placeholder="例如：李小明、Teacher01" onkeypress="if(event.key === 'Enter') login()">
@@ -32790,6 +32793,7 @@
         let db = null;
         let currentUser = null;
         let progressUnsubscribe = null;
+        window.isLocalOnly = false; // 判斷是否缺乏 Firebase 金鑰
 
         window.loadProgress = function() {
             return globalProgress;
@@ -32804,18 +32808,14 @@
                     localStorage.setItem('progress_' + currentUsername, JSON.stringify(globalProgress));
                 } catch(e) {}
                 
-                // 2. 雲端同步 (防抖機制)
-                if (currentUser && db && currentUsername) {
+                // 2. 雲端同步 (直接非同步寫入，Firebase Client 會自動批次管理，防止 setTimeout 導致遺失)
+                if (currentUser && db && currentUsername && !window.isLocalOnly) {
                     try {
                         const safeName = currentUsername.replace(/[/#?]/g, '_');
                         const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'userProgress', safeName);
-                        
-                        clearTimeout(window.saveTimeout);
-                        window.saveTimeout = setTimeout(async () => {
-                            await setDoc(docRef, globalProgress, { merge: true });
-                        }, 500);
+                        setDoc(docRef, globalProgress, { merge: true }).catch(e => console.error("雲端寫入失敗", e));
                     } catch(e) {
-                        console.error("雲端存檔失敗:", e);
+                        console.error("雲端存檔呼叫失敗:", e);
                     }
                 }
             }
@@ -32845,7 +32845,7 @@
                 } catch(e) {}
                 
                 // 2. 覆寫雲端儲存 (刪除鍵值需透過覆寫完整文件)
-                if (currentUser && db && currentUsername) {
+                if (currentUser && db && currentUsername && !window.isLocalOnly) {
                     try {
                         const safeName = currentUsername.replace(/[/#?]/g, '_');
                         const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'userProgress', safeName);
@@ -32951,16 +32951,20 @@
             } catch(e){ globalProgress = {}; }
 
             const ud = document.getElementById('display-username');
-            if (ud) ud.innerText = `👤 ${currentUsername} (連線中...)`;
-
-            if (currentUser && db) {
+            
+            if (window.isLocalOnly) {
+                if (ud) ud.innerText = `👤 ${currentUsername} (環境離線單機模式 🔴)`;
+            } else if (currentUser && db) {
+                if (ud) ud.innerText = `👤 ${currentUsername} (連線中...)`;
                 setupUserProgressListener(currentUsername);
             } else {
-                // 加入 3 秒超時保護機制：若雲端未就緒，自動轉為安全的本機離線模式
+                if (ud) ud.innerText = `👤 ${currentUsername} (連線中...)`;
+                // 超時保護：若因網路或金鑰失效導致 Firebase 遲遲未就緒，3秒後切換離線模式
                 setTimeout(() => {
                     const el = document.getElementById('display-username');
                     if (el && el.innerText.includes('連線中')) {
                         el.innerText = `👤 ${currentUsername} (離線單機模式 🔴)`;
+                        window.isLocalOnly = true;
                     }
                 }, 3000);
             }
@@ -32980,8 +32984,8 @@
                 isConnected = true;
                 if (docSnap.exists()) {
                     const cloudData = docSnap.data();
-                    // 確保剛作答的進度與雲端資料雙向合併
-                    globalProgress = { ...cloudData, ...globalProgress }; 
+                    // 多機同步時，將雲端最新狀態完整併入，解決覆寫衝突
+                    globalProgress = { ...globalProgress, ...cloudData }; 
                     try { localStorage.setItem('progress_' + username, JSON.stringify(globalProgress)); } catch(e){}
                 }
                 
@@ -32998,14 +33002,16 @@
                 console.error("Firestore 監聽失敗:", error);
                 const ud = document.getElementById('display-username');
                 if (ud) ud.innerText = `👤 ${username} (離線單機模式 🔴)`;
+                window.isLocalOnly = true;
             });
 
-            // 確保即使 onSnapshot 沒反應，3秒後也會顯示離線單機模式
+            // 確保即使 onSnapshot 無回覆，3 秒後也顯示明確狀態
             setTimeout(() => {
                 if (!isConnected) {
                     const el = document.getElementById('display-username');
                     if (el && el.innerText.includes('連線中')) {
                         el.innerText = `👤 ${username} (離線單機模式 🔴)`;
+                        window.isLocalOnly = true;
                     }
                 }
             }, 3000);
@@ -33364,7 +33370,10 @@
                 }
             } catch(e) {}
             
-            if (!firebaseConfig) return;
+            if (!firebaseConfig) {
+                window.isLocalOnly = true; // 判定為離線環境
+                return;
+            }
 
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
