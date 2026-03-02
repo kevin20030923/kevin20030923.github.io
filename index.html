@@ -32807,7 +32807,7 @@
                 // 2. 雲端同步 (防抖機制)
                 if (currentUser && db && currentUsername) {
                     try {
-                        const safeName = encodeURIComponent(currentUsername);
+                        const safeName = currentUsername.replace(/[/#?]/g, '_');
                         const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'userProgress', safeName);
                         
                         clearTimeout(window.saveTimeout);
@@ -32821,7 +32821,7 @@
             }
         }
 
-        // --- 新增：重設特定類別作答紀錄的函式 ---
+        // --- 重設特定類別作答紀錄的函式 ---
         window.resetCategoryProgress = async function(categoryName, isMain) {
             if (!confirm(`確定要將「${categoryName}」的進度歸零嗎？此動作無法復原。`)) return;
 
@@ -32847,7 +32847,7 @@
                 // 2. 覆寫雲端儲存 (刪除鍵值需透過覆寫完整文件)
                 if (currentUser && db && currentUsername) {
                     try {
-                        const safeName = encodeURIComponent(currentUsername);
+                        const safeName = currentUsername.replace(/[/#?]/g, '_');
                         const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'userProgress', safeName);
                         await setDoc(docRef, globalProgress); 
                     } catch(e) {
@@ -32939,7 +32939,7 @@
             err.style.display = 'none';
             currentUsername = input;
             
-            // 嘗試快取名稱與本機進度
+            // 嘗試快取名稱與讀取本機進度
             try { 
                 localStorage.setItem('eduQuizUser', currentUsername); 
                 const localData = localStorage.getItem('progress_' + currentUsername);
@@ -32950,10 +32950,19 @@
                 }
             } catch(e){ globalProgress = {}; }
 
-            document.getElementById('display-username').innerText = `👤 ${currentUsername}`;
+            const ud = document.getElementById('display-username');
+            if (ud) ud.innerText = `👤 ${currentUsername} (連線中...)`;
 
             if (currentUser && db) {
                 setupUserProgressListener(currentUsername);
+            } else {
+                // 加入 3 秒超時保護機制：若雲端未就緒，自動轉為安全的本機離線模式
+                setTimeout(() => {
+                    const el = document.getElementById('display-username');
+                    if (el && el.innerText.includes('連線中')) {
+                        el.innerText = `👤 ${currentUsername} (離線單機模式 🔴)`;
+                    }
+                }, 3000);
             }
 
             switchView('main');
@@ -32962,16 +32971,22 @@
         function setupUserProgressListener(username) {
             if (progressUnsubscribe) progressUnsubscribe();
             
-            const safeName = encodeURIComponent(username);
+            const safeName = username.replace(/[/#?]/g, '_');
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'userProgress', safeName);
+            
+            let isConnected = false;
+
             progressUnsubscribe = onSnapshot(docRef, (docSnap) => {
+                isConnected = true;
                 if (docSnap.exists()) {
-                    // 合併雲端與本機資料
-                    globalProgress = { ...globalProgress, ...docSnap.data() };
+                    const cloudData = docSnap.data();
+                    // 確保剛作答的進度與雲端資料雙向合併
+                    globalProgress = { ...cloudData, ...globalProgress }; 
                     try { localStorage.setItem('progress_' + username, JSON.stringify(globalProgress)); } catch(e){}
-                } else {
-                    // 若雲端無資料，維持本機資料
                 }
+                
+                const ud = document.getElementById('display-username');
+                if (ud) ud.innerText = `👤 ${username} (已同步雲端 ☁️)`;
                 
                 // 動態更新進度條畫面
                 if (currentSelections.year === '' && !views.main.classList.contains('hidden')) {
@@ -32981,10 +32996,21 @@
                 }
             }, (error) => {
                 console.error("Firestore 監聽失敗:", error);
+                const ud = document.getElementById('display-username');
+                if (ud) ud.innerText = `👤 ${username} (離線單機模式 🔴)`;
             });
+
+            // 確保即使 onSnapshot 沒反應，3秒後也會顯示離線單機模式
+            setTimeout(() => {
+                if (!isConnected) {
+                    const el = document.getElementById('display-username');
+                    if (el && el.innerText.includes('連線中')) {
+                        el.innerText = `👤 ${username} (離線單機模式 🔴)`;
+                    }
+                }
+            }, 3000);
         }
 
-        // --- 修改：傳遞 isMain 布林值至 createCard ---
         function renderMain() {
             const container = document.getElementById('main-list-container');
             container.innerHTML = ''; 
@@ -33307,7 +33333,6 @@
             document.getElementById('btn-next').disabled = (currentQuestionIndex === currentQuizList.length - 1);
         }
 
-        // --- 修改：加入 isMain 參數，並繪製重設按鈕 ---
         function createCard(text, progData, isMain, onClick) {
             const div = document.createElement('div');
             div.className = 'list-card';
