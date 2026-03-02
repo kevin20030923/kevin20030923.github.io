@@ -280,10 +280,7 @@
         <!-- 登入視圖 -->
         <div id="view-login" class="settings-card" style="margin-top: 10vh;">
             <h2 style="margin-top:0; margin-bottom: 10px; text-align:center; color: var(--primary);">教檢考古題複習系統</h2>
-            <p style="text-align:center; color: #777; font-size: 0.9rem; margin-bottom: 10px;">請輸入您的使用者名稱，系統將自動同步並儲存您的作答進度。</p>
-            <p style="text-align:center; color: var(--primary); font-size: 0.85rem; font-weight: bold; margin-bottom: 25px; background: #e3f2fd; padding: 8px; border-radius: 6px;">
-                💡 跨裝置同步秘訣：請將「當前網頁的網址」複製到其他裝置開啟，才能連線至同一個資料庫！
-            </p>
+            <p style="text-align:center; color: #777; font-size: 0.9rem; margin-bottom: 25px;">請輸入您的使用者名稱，系統將為您儲存作答進度。</p>
             
             <div class="setting-group" style="text-align: center;">
                 <input type="text" id="username-input" class="text-input" placeholder="例如：李小明、Teacher01" onkeypress="if(event.key === 'Enter') login()">
@@ -291,6 +288,18 @@
             </div>
             
             <button class="start-btn" onclick="login()">進入系統</button>
+
+            <!-- 手動備份區塊 -->
+            <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                <h3 style="font-size: 1rem; color: #555; text-align: center; margin-bottom: 5px;">手動匯出 / 匯入進度</h3>
+                <p style="font-size: 0.8rem; color: #888; text-align: center; margin-bottom: 15px;">可透過代碼將進度轉移至其他裝置。</p>
+                <textarea id="sync-data-textarea" class="text-input" style="font-size: 0.8rem; height: 60px; resize: none; background: #fafafa;" placeholder="在此貼上進度代碼... (匯出時會自動產生並複製)"></textarea>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button class="quick-btn" style="flex: 1; background: #e3f2fd; color: #1565c0; font-weight: bold;" onclick="exportProgress()">1. 匯出我的進度</button>
+                    <button class="quick-btn" style="flex: 1; background: #e8f5e9; color: #2e7d32; font-weight: bold;" onclick="importProgress()">2. 貼上後點此匯入</button>
+                </div>
+                <div id="sync-msg" style="text-align: center; font-size: 0.85rem; margin-top: 10px; font-weight: bold; min-height: 20px;"></div>
+            </div>
         </div>
 
         <div id="nav-header" class="nav-header">
@@ -301,7 +310,10 @@
         <div id="view-main" class="hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-left: 5px;">
                 <h2 style="margin: 0; color: #444;">請選擇測驗領域</h2>
-                <div id="display-username" style="font-size: 0.85rem; color: var(--primary); background: #e3f2fd; padding: 4px 10px; border-radius: 12px; font-weight: bold;"></div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <div id="display-username" style="font-size: 0.85rem; color: var(--primary); background: #e3f2fd; padding: 4px 10px; border-radius: 12px; font-weight: bold;"></div>
+                    <button onclick="switchView('login')" style="background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;">備份/切換帳號</button>
+                </div>
             </div>
             <div id="main-list-container"></div>
         </div>
@@ -376,11 +388,7 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // ※ 實際使用時請確保保留完整的所有題目資料，此處僅放一題作為示意結構 ※
+        // 本地儲存為主的簡易運作邏輯
         const questionsDB = [
             // --- 114年 課程教學與評量 ---
             {
@@ -32787,13 +32795,7 @@
         const navHeader = document.getElementById('nav-header');
         const breadcrumb = document.getElementById('breadcrumb');
 
-        // --- Firebase 雲端環境變數 ---
         let globalProgress = {}; 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        let db = null;
-        let currentUser = null;
-        let progressUnsubscribe = null;
-        window.isLocalOnly = false; // 判斷是否缺乏 Firebase 金鑰
 
         window.loadProgress = function() {
             return globalProgress;
@@ -32802,24 +32804,60 @@
         window.saveProgress = async function(id, status) {
             if (status === 'correct' || status === 'reviewed' || !globalProgress[id]) {
                 globalProgress[id] = status; 
-                
-                // 1. 本機雙重備份
                 try {
                     localStorage.setItem('progress_' + currentUsername, JSON.stringify(globalProgress));
                 } catch(e) {}
-                
-                // 2. 雲端同步 (直接非同步寫入，Firebase Client 會自動批次管理，防止 setTimeout 導致遺失)
-                if (currentUser && db && currentUsername && !window.isLocalOnly) {
-                    try {
-                        const safeName = currentUsername.replace(/[/#?]/g, '_');
-                        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'userProgress', safeName);
-                        setDoc(docRef, globalProgress, { merge: true }).catch(e => console.error("雲端寫入失敗", e));
-                    } catch(e) {
-                        console.error("雲端存檔呼叫失敗:", e);
-                    }
-                }
             }
         }
+
+        // --- 手動匯出進度 ---
+        window.exportProgress = function() {
+            const dataStr = JSON.stringify(globalProgress);
+            if (dataStr === '{}' || Object.keys(globalProgress).length === 0) {
+                window.showSyncMsg('目前沒有任何進度可以匯出。', 'var(--error)');
+                return;
+            }
+            const encoded = btoa(encodeURIComponent(dataStr));
+            const ta = document.getElementById('sync-data-textarea');
+            ta.value = encoded;
+            ta.select();
+            document.execCommand('copy');
+            window.showSyncMsg('✅ 進度代碼已產生並複製！請傳送到另一台裝置。', 'var(--success)');
+        };
+
+        // --- 手動匯入進度 ---
+        window.importProgress = function() {
+            const ta = document.getElementById('sync-data-textarea');
+            const encoded = ta.value.trim();
+            if (!encoded) {
+                window.showSyncMsg('請先貼上進度代碼。', 'var(--error)');
+                return;
+            }
+            try {
+                const decoded = decodeURIComponent(atob(encoded));
+                const parsed = JSON.parse(decoded);
+                if (typeof parsed === 'object') {
+                    globalProgress = { ...globalProgress, ...parsed };
+                    
+                    if (currentUsername) {
+                        localStorage.setItem('progress_' + currentUsername, JSON.stringify(globalProgress));
+                    }
+                    window.showSyncMsg('✅ 進度匯入成功！請點擊上方「進入系統」。', 'var(--success)');
+                    ta.value = '';
+                } else {
+                    throw new Error('Invalid format');
+                }
+            } catch (e) {
+                window.showSyncMsg('❌ 代碼格式錯誤，請重新複製。', 'var(--error)');
+            }
+        };
+
+        window.showSyncMsg = function(msg, color) {
+            const el = document.getElementById('sync-msg');
+            el.innerText = msg;
+            el.style.color = color;
+            setTimeout(() => { el.innerText = ''; }, 4000);
+        };
 
         // --- 重設特定類別作答紀錄的函式 ---
         window.resetCategoryProgress = async function(categoryName, isMain) {
@@ -32839,23 +32877,10 @@
             });
 
             if (changed) {
-                // 1. 更新本機儲存
                 try {
                     localStorage.setItem('progress_' + currentUsername, JSON.stringify(globalProgress));
                 } catch(e) {}
-                
-                // 2. 覆寫雲端儲存 (刪除鍵值需透過覆寫完整文件)
-                if (currentUser && db && currentUsername && !window.isLocalOnly) {
-                    try {
-                        const safeName = currentUsername.replace(/[/#?]/g, '_');
-                        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'userProgress', safeName);
-                        await setDoc(docRef, globalProgress); 
-                    } catch(e) {
-                        console.error("雲端重設失敗:", e);
-                    }
-                }
 
-                // 更新畫面
                 if (isMain) {
                     renderMain();
                 } else {
@@ -32881,19 +32906,17 @@
             return { percent, text: `${completed} / ${filteredQs.length}` };
         }
 
-        function switchView(viewId) {
+        window.switchView = function(viewId) {
             Object.values(views).forEach(el => el && el.classList.add('hidden'));
             if (views[viewId]) views[viewId].classList.remove('hidden');
 
             if (viewId === 'main' || viewId === 'login') {
-                navHeader.classList.add('hidden');
                 navHeader.style.display = 'none';
                 if (viewId === 'main') {
                     historyStack = [];
                     renderMain(); 
                 }
             } else {
-                navHeader.classList.remove('hidden');
                 navHeader.style.display = 'flex';
                 updateBreadcrumb();
             }
@@ -32939,7 +32962,6 @@
             err.style.display = 'none';
             currentUsername = input;
             
-            // 嘗試快取名稱與讀取本機進度
             try { 
                 localStorage.setItem('eduQuizUser', currentUsername); 
                 const localData = localStorage.getItem('progress_' + currentUsername);
@@ -32951,71 +32973,11 @@
             } catch(e){ globalProgress = {}; }
 
             const ud = document.getElementById('display-username');
-            
-            if (window.isLocalOnly) {
-                if (ud) ud.innerText = `👤 ${currentUsername} (環境離線單機模式 🔴)`;
-            } else if (currentUser && db) {
-                if (ud) ud.innerText = `👤 ${currentUsername} (連線中...)`;
-                setupUserProgressListener(currentUsername);
-            } else {
-                if (ud) ud.innerText = `👤 ${currentUsername} (連線中...)`;
-                // 超時保護：若因網路或金鑰失效導致 Firebase 遲遲未就緒，3秒後切換離線模式
-                setTimeout(() => {
-                    const el = document.getElementById('display-username');
-                    if (el && el.innerText.includes('連線中')) {
-                        el.innerText = `👤 ${currentUsername} (離線單機模式 🔴)`;
-                        window.isLocalOnly = true;
-                    }
-                }, 3000);
-            }
+            if (ud) ud.innerText = `👤 ${currentUsername}`;
 
             switchView('main');
         }
 
-        function setupUserProgressListener(username) {
-            if (progressUnsubscribe) progressUnsubscribe();
-            
-            const safeName = username.replace(/[/#?]/g, '_');
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'userProgress', safeName);
-            
-            let isConnected = false;
-
-            progressUnsubscribe = onSnapshot(docRef, (docSnap) => {
-                isConnected = true;
-                if (docSnap.exists()) {
-                    const cloudData = docSnap.data();
-                    // 多機同步時，將雲端最新狀態完整併入，解決覆寫衝突
-                    globalProgress = { ...globalProgress, ...cloudData }; 
-                    try { localStorage.setItem('progress_' + username, JSON.stringify(globalProgress)); } catch(e){}
-                }
-                
-                const ud = document.getElementById('display-username');
-                if (ud) ud.innerText = `👤 ${username} (已同步雲端 ☁️)`;
-                
-                // 動態更新進度條畫面
-                if (currentSelections.year === '' && !views.main.classList.contains('hidden')) {
-                    renderMain();
-                } else if (currentSelections.year === '' && currentSelections.sub !== '' && !views.sub.classList.contains('hidden')) {
-                    renderSub(structure[currentSelections.main]);
-                }
-            }, (error) => {
-                console.error("Firestore 監聽失敗:", error);
-                const ud = document.getElementById('display-username');
-                if (ud) ud.innerText = `👤 ${username} (離線單機模式 🔴)`;
-                window.isLocalOnly = true;
-            });
-
-            // 確保即使 onSnapshot 無回覆，3 秒後也顯示明確狀態
-            setTimeout(() => {
-                if (!isConnected) {
-                    const el = document.getElementById('display-username');
-                    if (el && el.innerText.includes('連線中')) {
-                        el.innerText = `👤 ${username} (離線單機模式 🔴)`;
-                        window.isLocalOnly = true;
-                    }
-                }
-            }, 3000);
-        }
 
         function renderMain() {
             const container = document.getElementById('main-list-container');
@@ -33362,42 +33324,7 @@
             return div;
         }
 
-        const initFirebase = async () => {
-            let firebaseConfig = null;
-            try {
-                if (typeof __firebase_config !== 'undefined') {
-                    firebaseConfig = JSON.parse(__firebase_config);
-                }
-            } catch(e) {}
-            
-            if (!firebaseConfig) {
-                window.isLocalOnly = true; // 判定為離線環境
-                return;
-            }
-
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            db = getFirestore(app);
-
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    currentUser = user;
-                    if (currentUsername) {
-                        setupUserProgressListener(currentUsername);
-                    }
-                }
-            });
-        };
-
         function init() {
-            initFirebase();
-            
             try {
                 const savedUser = localStorage.getItem('eduQuizUser');
                 if (savedUser) document.getElementById('username-input').value = savedUser;
