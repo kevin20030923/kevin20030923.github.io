@@ -173,6 +173,14 @@
         .radio-label:hover { background: #f9f9f9; }
         .radio-label input { margin-right: 8px; }
 
+        .checkbox-label {
+            display: flex; align-items: center; cursor: pointer;
+            padding: 6px 10px; border: 1px solid #eee; border-radius: 6px;
+            transition: all 0.2s; font-size: 0.9rem;
+        }
+        .checkbox-label:hover { background: #f9f9f9; }
+        .checkbox-label input { margin-right: 6px; }
+
         .number-input-group { display: flex; align-items: center; gap: 10px; }
         .number-input {
             padding: 10px; border: 1px solid #ccc; border-radius: 6px;
@@ -348,6 +356,18 @@
                         <label class="radio-label">
                             <input type="radio" name="quizType" value="mixed" onchange="updateSettingsStat()"> 僅非選題
                         </label>
+                    </div>
+                </div>
+
+                <!-- 新增年份選擇區塊 -->
+                <div class="setting-group">
+                    <label class="setting-label">選擇年份 (可複選)</label>
+                    <div style="margin-bottom: 10px;">
+                        <button class="quick-btn" onclick="toggleAllYears(true)">全選</button>
+                        <button class="quick-btn" onclick="toggleAllYears(false)">全不選</button>
+                    </div>
+                    <div id="year-checkbox-group" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <!-- JS 動態生成年份選項 -->
                     </div>
                 </div>
 
@@ -9025,7 +9045,7 @@
                 "main": "教育理念與實務",
                 "sub": "重要教育法規",
                 "type": "mixed",
-                "question": "轉學來的新同學小羽，皮膚黝黑，加上講話口音特殊，班上有幾位同學經常故意以模仿他的口音為樂，並為他取「歪果仁」的綽號，且將嘲諷小羽的迷因梗圖流傳於網路 社群媒體。此後，小羽出現厭惡上學、作惡夢等情形，每當手機跳出訊息通知，小羽便開始焦慮。學校知悉後，依據現行《校園霸凌防制準則》規定程序進行處理，採用修復式正義策略進行調和，修復雙方關係。\n\n依據現行《校園霸凌防制準則》對校園霸凌的定義，從班上幾位同學對小羽做出的行為及造成的結果，分別說明上述情境中，班上這幾位同學可能構成霸凌的理由。\n答題範例:\n(1)行為:________，理由:________\n(2)結果:________，理由:________",
+                "question": "轉學來的新同學小羽，皮膚黝黑，加上講話口音特殊，班上有幾位同學經常故意以模仿他的口音為樂，並為他取「歪果仁」的綽號，且將嘲諷小羽的迷因梗圖流傳於網路社群媒體。此後，小羽出現厭惡上學、作惡夢等情形，每當手機跳出訊息通知，小羽便開始焦慮。學校知悉後，依據現行《校園霸凌防制準則》規定程序進行處理，採用修復式正義策略進行調和，修復雙方關係。\n\n依據現行《校園霸凌防制準則》對校園霸凌的定義，從班上幾位同學對小羽做出的行為及造成的結果，分別說明上述情境中，班上這幾位同學可能構成霸凌的理由。\n答題範例:\n(1)行為:________，理由:________\n(2)結果:________，理由:________",
                 "options": [],
                 "answer": "",
                 "explanation": "1. 行為：同學「經常」、「故意」模仿口音、取綽號、流傳梗圖。符合霸凌定義中的「持續性」、「故意」及「侵害行為」（言語、網路霸凌）。\n2. 結果：造成小羽「厭惡上學、作惡夢、焦慮」。符合定義中使被害人處於「具有敵意或不友善之校園環境」，並產生「精神上、心理上之損害」及影響正常學習活動。"
@@ -9036,7 +9056,7 @@
                 "main": "教育理念與實務",
                 "sub": "教育社會學",
                 "type": "mixed",
-                "question": "轉學來的新同學小羽，皮膚黝黑，加上講話口音特殊，班上有幾位同學經常故意以模仿他的口音為樂，並為他取「歪果仁」的綽號，且將嘲諷小羽的迷因梗圖流傳於網路 社群媒體。此後，小羽出現厭惡上學、作惡夢等情形，每當手機跳出訊息通知，小羽便開始焦慮。學校知悉後，依據現行《校園霸凌防制準則》規定程序進行處理，採用修復式正義策略進行調和，修復雙方關係。\n\n從符號互動論的「符號意義」及批判理論的「意識形態」，分別說明其與情境中疑似霸凌事件的關聯。",
+                "question": "轉學來的新同學小羽，皮膚黝黑，加上講話口音特殊，班上有幾位同學經常故意以模仿他的口音為樂，並為他取「歪果仁」的綽號，且將嘲諷小羽的迷因梗圖流傳於網路社群媒體。此後，小羽出現厭惡上學、作惡夢等情形，每當手機跳出訊息通知，小羽便開始焦慮。學校知悉後，依據現行《校園霸凌防制準則》規定程序進行處理，採用修復式正義策略進行調和，修復雙方關係。\n\n從符號互動論的「符號意義」及批判理論的「意識形態」，分別說明其與情境中疑似霸凌事件的關聯。",
                 "options": [],
                 "answer": "",
                 "explanation": "1. 符號互動論（符號意義）：\n   - 同學賦予小羽的口音與膚色特定負面符號意義（如「歪果仁」），透過標籤化（Labeling）過程建構其「異類」身分，小羽在互動中內化此貶義符號，導致自我概念受損與焦慮。\n2. 批判理論（意識形態）：\n   - 此霸凌反映了主流群體（優勢文化）對少數群體（膚色、口音）的壓迫。嘲笑行為背後潛藏著「排他性」或「同化主義」的意識形態，透過語言霸權維持群體優越感，排斥差異。"
@@ -9047,7 +9067,7 @@
                 "main": "教育理念與實務",
                 "sub": "教育哲學",
                 "type": "mixed",
-                "question": "轉學來的新同學小羽，皮膚黝黑，加上講話口音特殊，班上有幾位同學經常故意以模仿他的口音為樂，並為他取「歪果仁」的綽號，且將嘲諷小羽的迷因梗圖流傳於網路 社群媒體。此後，小羽出現厭惡上學、作惡夢等情形，每當手機跳出訊息通知，小羽便開始焦慮。學校知悉後，依據現行《校園霸凌防制準則》規定程序進行處理，採用修復式正義策略進行調和，修復雙方關係。\n\n情境中針對疑似霸凌者的處遇方式較符合「報應性」、「懲戒性」或「恕道性」中哪一種懲罰原理?並簡述採用此原理之優、缺點。\n答題範例:\n(1)較符合________原理\n(2)優點:_____________，缺點:_____________",
+                "question": "轉學來的新同學小羽，皮膚黝黑，加上講話口音特殊，班上有幾位同學經常故意以模仿他的口音為樂，並為他取「歪果仁」的綽號，且將嘲諷小羽的迷因梗圖流傳於網路社群媒體。此後，小羽出現厭惡上學、作惡夢等情形，每當手機跳出訊息通知，小羽便開始焦慮。學校知悉後，依據現行《校園霸凌防制準則》規定程序進行處理，採用修復式正義策略進行調和，修復雙方關係。\n\n情境中針對疑似霸凌者的處遇方式較符合「報應性」、「懲戒性」或「恕道性」中哪一種懲罰原理?並簡述採用此原理之優、缺點。\n答題範例:\n(1)較符合________原理\n(2)優點:_____________，缺點:_____________",
                 "options": [],
                 "answer": "",
                 "explanation": "1. 原理：恕道性（或教育性/修復性）。因為學校採用「修復式正義」策略，旨在修復關係而非單純懲罰。\n2. 優缺點：\n   - 優點：能幫助行為人理解行為後果、培養同理心，並真正修復受損的關係，避免再犯。\n   - 缺點：耗時費力，且若行為人無悔意，可能流於形式，無法達到嚇阻效果，甚至對被害人造成二度傷害。"
@@ -9058,7 +9078,7 @@
                 "main": "教育理念與實務",
                 "sub": "重要教育法規",
                 "type": "mixed",
-                "question": "轉學來的新同學小羽，皮膚黝黑，加上講話口音特殊，班上有幾位同學經常故意以模仿他的口音為樂，並為他取「歪果仁」的綽號，且將嘲諷小羽的迷因梗圖流傳於網路 社群媒體。此後，小羽出現厭惡上學、作惡夢等情形，每當手機跳出訊息通知，小羽便開始焦慮。學校知悉後，依據現行《校園霸凌防制準則》規定程序進行處理，採用修復式正義策略進行調和，修復雙方關係。\n\n針對情境中的事件，學校在進行調和會議時，請寫出兩項處理原則以達到修復式正義所強調的「降低衝突、促進和解及修復關係」之精神。",
+                "question": "轉學來的新同學小羽，皮膚黝黑，加上講話口音特殊，班上有幾位同學經常故意以模仿他的口音為樂，並為他取「歪果仁」的綽號，且將嘲諷小羽的迷因梗圖流傳於網路社群媒體。此後，小羽出現厭惡上學、作惡夢等情形，每當手機跳出訊息通知，小羽便開始焦慮。學校知悉後，依據現行《校園霸凌防制準則》規定程序進行處理，採用修復式正義策略進行調和，修復雙方關係。\n\n針對情境中的事件，學校在進行調和會議時，請寫出兩項處理原則以達到修復式正義所強調的「降低衝突、促進和解及修復關係」之精神。",
                 "options": [],
                 "answer": "",
                 "explanation": "1. 自願參與原則：雙方（行為人與被害人）必須在知情且自願的情況下參與，不得強迫。\n2. 中立與尊重原則：調解人應保持中立，營造安全對話空間，讓雙方能平等表達感受與需求，聚焦於「行為造成的影響」而非對人的攻擊，共同尋求補償與修復方案。"
@@ -32817,12 +32837,30 @@
                 window.showSyncMsg('目前沒有任何進度可以匯出。', 'var(--error)');
                 return;
             }
-            const encoded = btoa(encodeURIComponent(dataStr));
+            
+            // 加入壓縮機制以縮短代碼長度
+            const types = { 'curr': '1', 'learn': '2', 'edu': '3', 'chi': '4' };
+            const statusMap = { 'correct': 'C', 'wrong': 'W', 'reviewed': 'R' };
+            
+            let parts = [];
+            for (let id in globalProgress) {
+                let s = statusMap[globalProgress[id]];
+                if (!s) continue;
+                
+                let compressedId = id;
+                for (let t in types) {
+                    compressedId = compressedId.replace('-' + t + '-', types[t]);
+                }
+                parts.push(compressedId + s);
+            }
+            
+            const encoded = 'V1!' + btoa(parts.join('.'));
+            
             const ta = document.getElementById('sync-data-textarea');
             ta.value = encoded;
             ta.select();
             document.execCommand('copy');
-            window.showSyncMsg('✅ 進度代碼已產生並複製！請傳送到另一台裝置。', 'var(--success)');
+            window.showSyncMsg('✅ 短代碼已產生並複製！請傳送至另一台裝置。', 'var(--success)');
         };
 
         // --- 手動匯入進度 ---
@@ -32834,9 +32872,32 @@
                 return;
             }
             try {
-                const decoded = decodeURIComponent(atob(encoded));
-                const parsed = JSON.parse(decoded);
-                if (typeof parsed === 'object') {
+                let parsed = {};
+                
+                if (encoded.startsWith('V1!')) {
+                    const b64 = encoded.substring(3);
+                    const str = atob(b64);
+                    const parts = str.split('.');
+                    const types = { '1': '-curr-', '2': '-learn-', '3': '-edu-', '4': '-chi-' };
+                    const statusMap = { 'C': 'correct', 'W': 'wrong', 'R': 'reviewed' };
+                    
+                    for (let p of parts) {
+                        if (!p) continue;
+                        let sChar = p.slice(-1);
+                        let stat = statusMap[sChar];
+                        let idPart = p.slice(0, -1);
+                        
+                        for (let t in types) {
+                            idPart = idPart.replace(t, types[t]);
+                        }
+                        if (stat) parsed[idPart] = stat;
+                    }
+                } else {
+                    const decoded = decodeURIComponent(atob(encoded));
+                    parsed = JSON.parse(decoded);
+                }
+
+                if (typeof parsed === 'object' && Object.keys(parsed).length > 0) {
                     globalProgress = { ...globalProgress, ...parsed };
                     
                     if (currentUsername) {
@@ -32848,7 +32909,7 @@
                     throw new Error('Invalid format');
                 }
             } catch (e) {
-                window.showSyncMsg('❌ 代碼格式錯誤，請重新複製。', 'var(--error)');
+                window.showSyncMsg('❌ 代碼格式錯誤，請確認複製完整。', 'var(--error)');
             }
         };
 
@@ -33084,8 +33145,25 @@
                 return matchMain && matchSub;
             });
             
+            // 自動生成年份勾選清單
+            const uniqueYears = [...new Set(availableQuestionsPool.map(q => q.year))].sort().reverse();
+            const yearGroup = document.getElementById('year-checkbox-group');
+            yearGroup.innerHTML = '';
+            uniqueYears.forEach(y => {
+                const lbl = document.createElement('label');
+                lbl.className = 'checkbox-label';
+                lbl.innerHTML = `<input type="checkbox" name="quizYear" value="${y}" checked onchange="updateSettingsStat()"> ${y}`;
+                yearGroup.appendChild(lbl);
+            });
+
             window.updateSettingsStat();
             switchView('settings');
+        }
+
+        window.toggleAllYears = function(checked) {
+            const boxes = document.getElementsByName('quizYear');
+            for(let b of boxes) b.checked = checked;
+            window.updateSettingsStat();
         }
 
         window.updateSettingsStat = function() {
@@ -33095,29 +33173,30 @@
                 if(el.checked) selectedType = el.value;
             }
 
+            const yearEls = document.getElementsByName('quizYear');
+            let selectedYears = [];
+            for(let el of yearEls) {
+                if(el.checked) selectedYears.push(el.value);
+            }
+
             const filteredPool = availableQuestionsPool.filter(q => {
-                if(selectedType === 'all') return true;
-                if(selectedType === 'choice') return q.type === 'choice';
-                if(selectedType === 'mixed') return q.type !== 'choice';
-                return true;
+                const matchType = selectedType === 'all' || 
+                                  (selectedType === 'choice' && q.type === 'choice') || 
+                                  (selectedType === 'mixed' && q.type !== 'choice');
+                const matchYear = selectedYears.includes(q.year);
+                return matchType && matchYear;
             });
 
             document.getElementById('settings-stat').innerText = 
-                `目前分類下，符合「${getTypeLabel(selectedType)}」的題目共有 ${filteredPool.length} 題`;
+                `目前條件下共有 ${filteredPool.length} 題`;
             
             const input = document.getElementById('quizCount');
             input.max = filteredPool.length;
             if(parseInt(input.value) > filteredPool.length) {
-                input.value = filteredPool.length;
+                input.value = filteredPool.length || 1;
             }
         }
         
-        function getTypeLabel(type) {
-            if(type === 'all') return '全部類型';
-            if(type === 'choice') return '選擇題';
-            return '非選題';
-        }
-
         window.setCount = function(val) {
             const input = document.getElementById('quizCount');
             if(val === 'all') {
@@ -33132,14 +33211,19 @@
             let selectedType = 'all';
             for(let el of typeEls) if(el.checked) selectedType = el.value;
             
+            const yearEls = document.getElementsByName('quizYear');
+            let selectedYears = [];
+            for(let el of yearEls) if(el.checked) selectedYears.push(el.value);
+
             let count = parseInt(document.getElementById('quizCount').value) || 20;
             const prog = window.loadProgress();
 
             let pool = availableQuestionsPool.filter(q => {
-                if(selectedType === 'all') return true;
-                if(selectedType === 'choice') return q.type === 'choice';
-                if(selectedType === 'mixed') return q.type !== 'choice'; 
-                return true;
+                const matchType = selectedType === 'all' || 
+                                  (selectedType === 'choice' && q.type === 'choice') || 
+                                  (selectedType === 'mixed' && q.type !== 'choice');
+                const matchYear = selectedYears.includes(q.year);
+                return matchType && matchYear;
             });
 
             const priorityPool = [];
