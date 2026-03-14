@@ -32587,7 +32587,6 @@
         let globalProgress = {}; 
 
         // Firebase 環境
-        // Sanitize __app_id for Realtime Database (no '.', '#', '$', '[', or ']')
         let rawAppId = typeof __app_id !== 'undefined' ? __app_id : 'teacher-certification-422e7';
         const appId = rawAppId.replace(/[.#$[\]]/g, '_');
         
@@ -32826,12 +32825,16 @@
             const input = document.getElementById('username-input').value.trim();
             const err = document.getElementById('login-error');
             if (!input) return err.style.display = 'block';
-            err.style.display = 'none'; currentUsername = input;
+            err.style.display = 'none'; 
+            
+            // 每次登入時強制重置記憶體，確保獨立存檔
+            globalProgress = {};
+            currentUsername = input;
             
             try { 
                 localStorage.setItem('eduQuizUser', currentUsername); 
                 let parsedLocal = JSON.parse(localStorage.getItem('progress_' + currentUsername)) || {};
-                globalProgress = { ...parsedLocal, ...globalProgress };
+                globalProgress = { ...parsedLocal };
                 localStorage.setItem('progress_' + currentUsername, JSON.stringify(globalProgress));
             } catch(e){ }
 
@@ -33092,6 +33095,7 @@
                 const savedUser = localStorage.getItem('eduQuizUser');
                 if (savedUser) document.getElementById('username-input').value = savedUser;
             } catch(e){}
+            // 不要在此自動登入，以免引發未預期的全域變數殘留
             window.switchView('login');
         }
 
