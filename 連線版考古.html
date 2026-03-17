@@ -15703,7 +15703,7 @@
                 "id": "102-edu-36",
                 "year": "102年",
                 "main": "教育理念與實務",
-                "sub": "教育基本概念",
+                "sub": "教育的基本概念",
                 "type": "choice",
                 "question": "在激勵的理論類型中，下列何者屬於程序理論(process theory)？",
                 "options": [
@@ -15816,7 +15816,7 @@
                 "id": "102-edu-44",
                 "year": "102年",
                 "main": "教育理念與實務",
-                "sub": "教育基本概念",
+                "sub": "教育的基本概念",
                 "type": "mixed",
                 "question": "試列舉「學習型組織」內涵中的五項重點。",
                 "options": [],
@@ -17188,7 +17188,7 @@
                 "id": "100-edu-44",
                 "year": "100年",
                 "main": "教育理念與實務",
-                "sub": "教育基本概念",
+                "sub": "教育的基本概念",
                 "type": "mixed",
                 "question": "何謂行政倫理？列舉三條適合教師與學校行政人員的倫理信條。",
                 "options": [],
@@ -33017,7 +33017,27 @@
 
         function renderQuestion(q, container) {
             let typeLabel = q.type === 'choice' ? '選擇題' : '非選題';
-            let html = `<div class="quiz-meta"><span>${q.year}</span><span>${typeLabel}</span></div><div class="question-text" data-id="${q.id}">${q.question}</div>`;
+            
+            // 根據 ID 與類型組合詳細標題
+            const subjectMap = {
+                'edu': '教育理念與實務',
+                'curr': '課程教學與評量',
+                'learn': '學習者發展與適性輔導',
+                'chi': '國語文能力測驗'
+            };
+            const idParts = q.id.split('-');
+            const subjCode = idParts[idParts.length - 2] || '';
+            const numCode = idParts[idParts.length - 1] || '';
+            const subjName = subjectMap[subjCode] || q.main;
+            
+            let detailedTitle = q.year + subjName;
+            if (q.type === 'choice') {
+                detailedTitle += '-' + numCode;
+            } else {
+                detailedTitle += '-混合題';
+            }
+
+            let html = `<div class="quiz-meta"><span>${detailedTitle}</span><span>${typeLabel}</span></div><div class="question-text" data-id="${q.id}">${q.question}</div>`;
             if (q.type === 'choice') {
                 html += `<div id="options-area" data-answered="false">`;
                 ['A', 'B', 'C', 'D','E'].forEach((opt, idx) => {
