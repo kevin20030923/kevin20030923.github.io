@@ -21683,7 +21683,7 @@
                     "丙→丁→乙→甲",
                     "丁→乙→丙→甲"
                 ],
-                "answer": "A (or B)",
+                "answer": "A, B",
                 "explanation": "(A) 系統減敏法 (Systematic Desensitization) 的標準程序通常為：\n1. 放鬆訓練 (甲)：先教會個案肌肉放鬆技術。\n2. 建立焦慮階層 (乙)：訂定焦慮情境等級。\n3. 進行減敏 (丙→丁)：在放鬆狀態下，依階層進行想像練習 (丙)，成功後再推廣到現實情境 (丁)。\n(註：實務上有時會先談焦慮階層再教放鬆，或同時進行。官方答案通常接受 A 或 B，視教科書版本而定，但「想像→現實」的後段順序是固定的。依當年答案 A 為主，部分版本可能選 B，重點在於前兩者準備好後，才能進行後續配對。)"
             },
             {
@@ -21715,8 +21715,8 @@
                     "中系統",
                     "巨系統"
                 ],
-                "answer": "B (or C)",
-                "explanation": "(B) 微系統 (Microsystem)：指個體「直接參與」且有持續互動的環境。慧君「全心投入合唱團」，合唱團是她直接活動的場所，故屬於微系統。\n(註：若題目意指合唱團與家庭/學校的互動影響，則為中系統。但就單一場域對個人的直接影響而言，B 為最直接答案。當年官方答案可能給 B 或 BC，視解釋角度。)"
+                "answer": "B , C",
+                "explanation": "(B) 微系統 (Microsystem)：指個體「直接參與」且有持續互動的環境。慧君「全心投入合唱團」，合唱團是她直接活動的場所，故屬於微系統。\n(註：若題目意指合唱團與家庭/學校的互動影響，則為中系統。但就單一場域對個人的直接影響而言，B 為最直接答案。C也正確，視解釋角度。)"
             },
             {
                 "id": "106-learn-29",
@@ -24769,7 +24769,7 @@
                     "差異問句",
                     "奇蹟問句"
                 ],
-                "answer": "B (or 應為因應問句，但選項中選 B 最接近)",
+                "answer": "B ",
                 "explanation": "(B) 題目中的問句「你是怎麼做到的？」(How did you do it?) 是焦點解決中的 「因應問句」(Coping Question) 或 「成功/能耐問句」，旨在引導當事人看見自己的能力與資源。在舊的分類或選項限制下，這常被歸類為廣義的「例外問句」（探討問題不發生或成功克服的時刻）。\n(註：嚴格來說是因應問句，但若選項無因應問句，例外問句是描述成功經驗最接近的選項。)"
             },
             {
@@ -25105,7 +25105,7 @@
                     "親密與相互分享",
                     "公平氣氛之下的合作"
                 ],
-                "answer": "B (or C in some versions, but 題目強調「信守承諾/付出/中斷」，偏向Stage 3-4)",
+                "answer": "B ",
                 "explanation": "(B) 題目敘述「信守承諾」、「需要付出」、「可因不維繫而中斷」，這顯示對友誼的深層理解，接近 Stage 3 (親密共享) 或 Stage 4 (自主依賴)。在 Selman 理論中，Stage 3 強調親密與排他，Stage 4 強調自主與依賴的平衡。小明理解友誼的動態性與承諾，較符合高階發展。依據官方答案為 (B) 自主相互依賴 (Stage 4)。（註：有些文獻將此特徵歸於 Stage 3 親密共享，但答案選 B 應是強調對關係本質的成熟理解）。"
             },
             {
@@ -33049,18 +33049,26 @@
             container.innerHTML = html;
         }
 
-        window.checkAnswer = (btn, qId, userOpt, correctOpt) => {
-            const parent = btn.parentElement; if (parent.dataset.answered === 'true') return; parent.dataset.answered = 'true';
-            const allBtns = parent.querySelectorAll('.option-btn');
-            let isCorrect = userOpt === correctOpt;
-            window.saveProgress(qId, isCorrect ? 'correct' : 'wrong');
-            btn.classList.add(isCorrect ? 'correct' : 'wrong');
-            if (!isCorrect) {
-                const correctIndex = ['A','B','C','D','E'].indexOf(correctOpt);
-                if (correctIndex !== -1 && allBtns[correctIndex]) allBtns[correctIndex].classList.add('correct');
-            }
-            document.getElementById('explanation-area').classList.remove('hidden');
-        }
+       window.checkAnswer = (btn, qId, userOpt, correctOpt) => {
+    const parent = btn.parentElement; if (parent.dataset.answered === 'true') return; parent.dataset.answered = 'true';
+    const allBtns = parent.querySelectorAll('.option-btn');
+    
+    // 支援多重答案判斷，藉由逗號或斜線分割答案字串
+    const correctAnswers = String(correctOpt).split(/[,/、]/).map(s => s.trim());
+    let isCorrect = correctAnswers.includes(userOpt);
+    
+    window.saveProgress(qId, isCorrect ? 'correct' : 'wrong');
+    btn.classList.add(isCorrect ? 'correct' : 'wrong');
+    
+    // 若答錯，將所有的正確答案同時標示出來
+    if (!isCorrect) {
+        correctAnswers.forEach(ans => {
+            const correctIndex = ['A','B','C','D','E'].indexOf(ans);
+            if (correctIndex !== -1 && allBtns[correctIndex]) allBtns[correctIndex].classList.add('correct');
+        });
+    }
+    document.getElementById('explanation-area').classList.remove('hidden');
+}
 
         window.markReviewedAndToggle = (qId) => { window.saveProgress(qId, 'reviewed'); document.getElementById('explanation-area').classList.toggle('hidden'); }
         window.nextQuestion = () => { if (currentQuestionIndex < currentQuizList.length - 1) { currentQuestionIndex++; renderQuizUI(); } }
