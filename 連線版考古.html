@@ -76,7 +76,7 @@
         .quiz-container { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); min-height: 300px; }
         .quiz-meta { font-size: 0.85rem; color: #999; margin-bottom: 15px; display: flex; justify-content: space-between; }
         .question-text { font-size: 1.1rem; font-weight: 600; line-height: 1.6; margin-bottom: 25px; color: #2c3e50; white-space: pre-wrap; }
-        .question-text img { max-width: 100%; height: auto; display: block; margin: 10px auto; border-radius: 8px; }
+        .question-text img, .explanation-box img { max-width: 100%; height: auto; display: block; margin: 10px auto; border-radius: 8px; }
         .option-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; text-align: left; font-size: 1rem; color: #444; cursor: pointer; display: flex; align-items: center; }
         .option-tag { width: 24px; height: 24px; border-radius: 50%; background: #eee; color: #666; display: inline-flex; justify-content: center; align-items: center; margin-right: 12px; font-size: 0.8rem; font-weight: bold; flex-shrink: 0; }
         .option-btn.correct { background: #e8f8f5; border-color: var(--success); color: var(--success); }
@@ -86,8 +86,23 @@
         .explanation-box { margin-top: 20px; padding: 15px; background: #fff8e1; border-radius: 8px; font-size: 0.95rem; line-height: 1.6; color: #5d4037; border-left: 4px solid #ffca28; white-space: pre-line; box-sizing: border-box; }
         .quiz-controls { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; }
         .control-btn { padding: 10px 20px; border: none; border-radius: 6px; background: var(--primary); color: white; font-size: 0.9rem; cursor: pointer; }
+        .control-btn.finish-mode { background: var(--success); font-weight: bold; }
         .control-btn:disabled { background: #ccc; cursor: not-allowed; }
         .show-ans-btn { width: 100%; padding: 12px; background: var(--secondary); color: white; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
+
+        /* 測驗結算區 */
+        .result-score-box { text-align: center; padding: 20px 15px; background: #f8fafc; border-radius: 10px; margin-bottom: 18px; }
+        .result-score-num { font-size: 2.4rem; font-weight: 800; color: var(--primary); margin: 5px 0; }
+        .result-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+        .result-stat-item { background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 10px 6px; text-align: center; font-size: 0.85rem; color: #666; }
+        .result-stat-item strong { display: block; font-size: 1.2rem; margin-top: 4px; }
+        .result-review-list { max-height: 280px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; margin-bottom: 18px; }
+        .result-review-item { padding: 12px 14px; border-bottom: 1px solid #f0f0f0; cursor: pointer; display: flex; flex-direction: column; gap: 4px; transition: background 0.15s; }
+        .result-review-item:last-child { border-bottom: none; }
+        .result-review-item:hover { background: #f5f9ff; }
+        .result-review-top { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: bold; }
+        .result-review-snippet { font-size: 0.9rem; color: #444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
         .hidden { display: none !important; }
     </style>
 </head>
@@ -100,7 +115,7 @@
             <h2 style="margin-top:0; text-align:center; color: var(--primary);">教檢考古題複習</h2>
             <p style="text-align:center; color: #777; font-size: 0.9rem; margin-bottom: 20px;">請輸入您的使用者名稱，系統將為您儲存作答進度。</p>
             <div class="setting-group" style="text-align: center;">
-                <input type="text" id="username-input" class="text-input" placeholder="例如：李小明" onkeypress="if(event.key === 'Enter') login()">
+                <input type="text" id="username-input" class="text-input" placeholder="例如：李小明" onkeydown="if(event.key === 'Enter' && !event.isComposing && event.keyCode !== 229) login()">
                 <div id="login-error" style="color: var(--error); font-size: 0.85rem; margin-top: 8px; display: none;">請輸入有效名稱</div>
             </div>
             <button class="start-btn" onclick="login()">進入系統</button>
@@ -196,12 +211,18 @@
                 此分類/年份目前尚無題目資料。
             </div>
         </div>
+
+        <!-- 測驗結算視圖 -->
+        <div id="view-result" class="hidden">
+            <div class="settings-card" id="result-content"></div>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getDatabase, ref, set, update, get, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
 
         // 本地儲存為主的簡易運作邏輯
         const questionsDB = [
@@ -49583,6 +49604,7 @@
         let currentQuizList = [], currentQuestionIndex = 0, availableQuestionsPool = []; 
         let currentUsername = '';
         let globalProgress = {}; 
+        let sessionRecords = {}; // 記錄單次測驗的作答選項與詳解展開狀態
 
         // Firebase 環境
         let rawAppId = typeof __app_id !== 'undefined' ? __app_id : 'teacher-certification-422e7';
@@ -49597,10 +49619,57 @@
             sub: document.getElementById('view-sub'),
             year: document.getElementById('view-year'),
             settings: document.getElementById('view-settings'),
-            quiz: document.getElementById('view-quiz')
+            quiz: document.getElementById('view-quiz'),
+            result: document.getElementById('view-result')
         };
         const navHeader = document.getElementById('nav-header');
         const breadcrumb = document.getElementById('breadcrumb');
+
+        // 過濾出純淨的作答進度，排除內部時間戳記欄位
+        function getCleanProgress(obj) {
+            const clean = {};
+            if (!obj || typeof obj !== 'object') return clean;
+            for (const k in obj) {
+                if (!k.startsWith('_') && (obj[k] === 'correct' || obj[k] === 'wrong' || obj[k] === 'reviewed')) {
+                    clean[k] = obj[k];
+                }
+            }
+            return clean;
+        }
+
+        // 管理離線期間尚未同步至雲端的變更佇列（避免跨裝置重設進度被舊快取復活）
+        function getPendingOps(username) {
+            if (!username) return {};
+            try { return JSON.parse(localStorage.getItem('pending_' + username)) || {}; } catch (e) { return {}; }
+        }
+
+        function setPendingOps(username, ops) {
+            if (!username) return;
+            try {
+                if (!ops || Object.keys(ops).length === 0) localStorage.removeItem('pending_' + username);
+                else localStorage.setItem('pending_' + username, JSON.stringify(ops));
+            } catch (e) {}
+        }
+
+        // 相容 iOS Safari 與現代瀏覽器的剪貼簿複製工具
+        async function copyTextToClipboard(text, textareaEl) {
+            if (textareaEl) textareaEl.value = text;
+            if (navigator.clipboard && window.isSecureContext) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                } catch (e) {}
+            }
+            if (textareaEl) {
+                try {
+                    textareaEl.focus();
+                    textareaEl.select();
+                    textareaEl.setSelectionRange(0, text.length);
+                    return document.execCommand('copy');
+                } catch (e) {}
+            }
+            return false;
+        }
 
         window.loadProgress = () => globalProgress;
 
@@ -49613,15 +49682,26 @@
                     try {
                         const safeName = currentUsername.replace(/[.#$[\]]/g, '_');
                         const userRef = ref(db, `artifacts/${appId}/public/data/userProgress/${safeName}`);
-                        update(userRef, globalProgress).catch(e => console.error(e));
-                    } catch(e) {}
+                        // 僅局部更新單題與時間戳記，避免將本地舊快取整包覆寫回雲端
+                        await update(userRef, { [id]: status, _updatedAt: Date.now() });
+                    } catch(e) {
+                        console.error(e);
+                        const pending = getPendingOps(currentUsername);
+                        pending[id] = status;
+                        setPendingOps(currentUsername, pending);
+                    }
+                } else if (currentUsername) {
+                    const pending = getPendingOps(currentUsername);
+                    pending[id] = status;
+                    setPendingOps(currentUsername, pending);
                 }
             }
-        }
+        };
 
         // --- 智慧匯出進度 (優先產生 6 碼短代碼) ---
         window.exportProgress = async () => {
-            if (Object.keys(globalProgress).length === 0) return window.showSyncMsg('無進度可匯出', 'var(--error)');
+            const cleanProg = getCleanProgress(globalProgress);
+            if (Object.keys(cleanProg).length === 0) return window.showSyncMsg('無進度可匯出', 'var(--error)');
             const ta = document.getElementById('sync-data-textarea');
             
             // 若連線正常，透過 Firebase 產生 6 碼短代碼
@@ -49630,10 +49710,14 @@
                     window.showSyncMsg('⏳ 產生短代碼中...', 'var(--primary)');
                     const shortCode = Math.random().toString(36).substring(2, 8).toUpperCase();
                     const codeRef = ref(db, `artifacts/${appId}/public/data/shareCodes/${shortCode}`);
-                    await set(codeRef, { data: globalProgress, timestamp: Date.now() });
+                    await set(codeRef, { data: cleanProg, timestamp: Date.now() });
                     
-                    ta.value = shortCode; ta.select(); document.execCommand('copy');
-                    return window.showSyncMsg(`✅ 短代碼 [ ${shortCode} ] 已產生並複製！請在另一台裝置輸入。`, 'var(--success)');
+                    const copied = await copyTextToClipboard(shortCode, ta);
+                    return window.showSyncMsg(
+                        copied ? `✅ 短代碼 [ ${shortCode} ] 已產生並複製！請在另一台裝置輸入。`
+                               : `✅ 短代碼 [ ${shortCode} ] 已產生！請手動複製上方代碼。`,
+                        'var(--success)'
+                    );
                 } catch(e) {
                     console.error('短代碼失敗，改用長代碼', e);
                 }
@@ -49643,8 +49727,8 @@
             const types = { 'curr': '1', 'learn': '2', 'edu': '3', 'chi': '4' };
             const statusMap = { 'correct': 'C', 'wrong': 'W', 'reviewed': 'R' };
             let groups = {};
-            for (let id in globalProgress) {
-                let s = statusMap[globalProgress[id]];
+            for (let id in cleanProg) {
+                let s = statusMap[cleanProg[id]];
                 if (!s) continue;
                 let match = id.match(/^(.+)-(curr|learn|edu|chi)-(\d+)$/);
                 if (match) {
@@ -49660,8 +49744,11 @@
             for (let p in groups) parts.push(p + ':' + (p === 'X' ? groups[p].join(',') : groups[p].join('')));
             const encoded = 'V2!' + btoa(parts.join('|')).replace(/=+$/, '');
             
-            ta.value = encoded; ta.select(); document.execCommand('copy');
-            window.showSyncMsg('✅ 離線長代碼已產生並複製！', 'var(--success)');
+            const copied = await copyTextToClipboard(encoded, ta);
+            window.showSyncMsg(
+                copied ? '✅ 離線長代碼已產生並複製！' : '✅ 離線長代碼已產生！請手動複製上方代碼。',
+                'var(--success)'
+            );
         };
 
         // --- 智慧匯入進度 (支援 6 碼短代碼與長代碼) ---
@@ -49670,6 +49757,11 @@
             const encoded = ta.value.trim().toUpperCase();
             if (!encoded) return window.showSyncMsg('請貼上代碼', 'var(--error)');
             
+            const targetUsername = currentUsername || document.getElementById('username-input').value.trim();
+            if (!targetUsername) {
+                return window.showSyncMsg('⚠️ 請先在上方輸入使用者名稱，再點擊匯入進度', 'var(--error)');
+            }
+
             // 判斷是否為 6 碼雲端代碼
             if (encoded.length === 6 && !encoded.includes('!') && !encoded.includes('.')) {
                 if (!db || window.isLocalOnly) return window.showSyncMsg('❌ 離線狀態無法使用短代碼，請使用長代碼', 'var(--error)');
@@ -49678,7 +49770,7 @@
                     const codeRef = ref(db, `artifacts/${appId}/public/data/shareCodes/${encoded}`);
                     const snap = await get(codeRef);
                     if (snap.exists()) {
-                        processMergedData(snap.val().data, ta);
+                        processMergedData(snap.val().data, ta, targetUsername);
                     } else {
                         window.showSyncMsg('❌ 找不到此 6 碼代碼或已失效', 'var(--error)');
                     }
@@ -49728,27 +49820,33 @@
                 } else {
                     parsed = JSON.parse(decodeURIComponent(atob(rawEncoded)));
                 }
-                processMergedData(parsed, ta);
+                processMergedData(parsed, ta, targetUsername);
             } catch (e) {
                 window.showSyncMsg('❌ 離線代碼格式錯誤，請確認複製完整。', 'var(--error)');
             }
         };
 
-        function processMergedData(parsed, ta) {
-            if (Object.keys(parsed).length > 0) {
-                const targetUsername = currentUsername || document.getElementById('username-input').value.trim();
+        function processMergedData(parsed, ta, targetUsername) {
+            const cleanParsed = getCleanProgress(parsed);
+            if (Object.keys(cleanParsed).length > 0) {
                 let existingLocal = {};
-                if (targetUsername) {
-                    try { existingLocal = JSON.parse(localStorage.getItem('progress_' + targetUsername)) || {}; } catch(e){}
-                }
-                globalProgress = { ...existingLocal, ...globalProgress, ...parsed };
-                if (targetUsername) {
-                    localStorage.setItem('progress_' + targetUsername, JSON.stringify(globalProgress));
-                    if (currentUser && db && !window.isLocalOnly) {
-                        const safeName = targetUsername.replace(/[.#$[\]]/g, '_');
-                        const userRef = ref(db, `artifacts/${appId}/public/data/userProgress/${safeName}`);
-                        update(userRef, globalProgress).catch(e => console.error(e));
-                    }
+                try { existingLocal = getCleanProgress(JSON.parse(localStorage.getItem('progress_' + targetUsername))); } catch(e){}
+                globalProgress = { ...existingLocal, ...getCleanProgress(globalProgress), ...cleanParsed };
+                try { localStorage.setItem('progress_' + targetUsername, JSON.stringify(globalProgress)); } catch(e){}
+
+                if (currentUser && db && !window.isLocalOnly) {
+                    const safeName = targetUsername.replace(/[.#$[\]]/g, '_');
+                    const userRef = ref(db, `artifacts/${appId}/public/data/userProgress/${safeName}`);
+                    update(userRef, { ...cleanParsed, _updatedAt: Date.now() }).catch(e => {
+                        console.error(e);
+                        const pending = getPendingOps(targetUsername);
+                        Object.assign(pending, cleanParsed);
+                        setPendingOps(targetUsername, pending);
+                    });
+                } else {
+                    const pending = getPendingOps(targetUsername);
+                    Object.assign(pending, cleanParsed);
+                    setPendingOps(targetUsername, pending);
                 }
                 window.showSyncMsg('✅ 進度匯入成功！請點擊上方「進入系統」。', 'var(--success)'); 
                 ta.value = '';
@@ -49763,24 +49861,44 @@
             setTimeout(() => { el.innerText = ''; }, 4000);
         };
 
-        window.resetCategoryProgress = (categoryName, isMain) => {
+        window.resetCategoryProgress = async (categoryName, isMain) => {
             if (!confirm(`確定將「${categoryName}」進度歸零？`)) return;
+            const targetQs = questionsDB.filter(q => isMain ? q.main === categoryName : q.main === currentSelections.main && q.sub === categoryName);
+            const deletePatch = {};
             let changed = false;
-            questionsDB.filter(q => isMain ? q.main === categoryName : q.main === currentSelections.main && q.sub === categoryName)
-                       .forEach(q => { if (globalProgress[q.id]) { delete globalProgress[q.id]; changed = true; } });
+
+            targetQs.forEach(q => {
+                deletePatch[q.id] = null; // 傳入 null 讓雲端精準移除被重設的題目，保留 _updatedAt 標記
+                if (globalProgress[q.id]) {
+                    delete globalProgress[q.id];
+                    changed = true;
+                }
+            });
             
-            if (changed) {
+            if (changed || Object.keys(deletePatch).length > 0) {
                 try { localStorage.setItem('progress_' + currentUsername, JSON.stringify(globalProgress)); } catch(e) {}
                 
+                const pending = getPendingOps(currentUsername);
                 if (currentUser && db && currentUsername && !window.isLocalOnly) {
-                    const safeName = currentUsername.replace(/[.#$[\]]/g, '_');
-                    const userRef = ref(db, `artifacts/${appId}/public/data/userProgress/${safeName}`);
-                    set(userRef, globalProgress).catch(e => console.error(e));
+                    try {
+                        const safeName = currentUsername.replace(/[.#$[\]]/g, '_');
+                        const userRef = ref(db, `artifacts/${appId}/public/data/userProgress/${safeName}`);
+                        Object.keys(deletePatch).forEach(k => delete pending[k]);
+                        setPendingOps(currentUsername, pending);
+                        await update(userRef, { ...deletePatch, _updatedAt: Date.now() });
+                    } catch(e) {
+                        console.error(e);
+                        Object.assign(pending, deletePatch);
+                        setPendingOps(currentUsername, pending);
+                    }
+                } else if (currentUsername) {
+                    Object.assign(pending, deletePatch);
+                    setPendingOps(currentUsername, pending);
                 }
 
                 isMain ? renderMain() : renderSub(structure[currentSelections.main]);
             }
-        }
+        };
 
         function getCategoryProgress(mainCat, subCat = null) {
             const filteredQs = questionsDB.filter(q => q.main === mainCat && (!subCat || q.sub === subCat));
@@ -49808,26 +49926,28 @@
                 navHeader.style.display = 'none';
                 if (viewId === 'main') { historyStack = []; renderMain(); }
             } else {
-                navHeader.style.display = 'flex'; updateBreadcrumb();
+                navHeader.style.display = 'flex'; updateBreadcrumb(viewId);
             }
             window.scrollTo(0,0);
-        }
+        };
 
-        function updateBreadcrumb() {
+        function updateBreadcrumb(viewId = '') {
             let text = currentSelections.main;
             if (currentSelections.sub && currentSelections.sub !== currentSelections.main) text += ` > ${currentSelections.sub}`;
             if (currentSelections.year) text += ` > ${currentSelections.year}`;
+            if (viewId === 'result') text += ` > 測驗結算`;
             breadcrumb.innerText = text;
         }
 
         window.goBack = () => {
             if (historyStack.length === 0) return;
             const prevView = historyStack.pop();
-            if (prevView === 'year') currentSelections.year = '';
+            if (prevView === 'settings') { currentSelections.year = '隨機測驗'; window.updateSettingsStat(); }
+            if (prevView === 'year') { currentSelections.year = ''; renderYear(); }
             if (prevView === 'sub') { currentSelections.sub = currentSelections.year = ''; renderSub(structure[currentSelections.main]); }
             if (prevView === 'main') currentSelections = { main: '', sub: '', year: '' };
             window.switchView(prevView);
-        }
+        };
 
         window.login = () => {
             const input = document.getElementById('username-input').value.trim();
@@ -49841,7 +49961,7 @@
             
             try { 
                 localStorage.setItem('eduQuizUser', currentUsername); 
-                let parsedLocal = JSON.parse(localStorage.getItem('progress_' + currentUsername)) || {};
+                let parsedLocal = getCleanProgress(JSON.parse(localStorage.getItem('progress_' + currentUsername)));
                 globalProgress = { ...parsedLocal };
                 localStorage.setItem('progress_' + currentUsername, JSON.stringify(globalProgress));
             } catch(e){ }
@@ -49865,7 +49985,7 @@
             }
 
             window.switchView('main');
-        }
+        };
 
         function setupUserProgressListener(username) {
             if (progressUnsubscribe) {
@@ -49878,16 +49998,37 @@
             let isConnected = false;
             progressUnsubscribe = onValue(docRef, (snapshot) => {
                 isConnected = true;
+                const pending = getPendingOps(username);
+                const hasPending = Object.keys(pending).length > 0;
+
                 if (snapshot.exists()) {
-                    const cloudData = snapshot.val();
-                    globalProgress = { ...globalProgress, ...cloudData }; 
+                    // 以雲端狀態為基準，僅套用真正尚未上傳的離線變更，防止已重設進度被舊快取復活
+                    const cloudClean = getCleanProgress(snapshot.val());
+                    if (hasPending) {
+                        for (const k in pending) {
+                            if (pending[k] === null) delete cloudClean[k];
+                            else cloudClean[k] = pending[k];
+                        }
+                        setPendingOps(username, {});
+                        update(docRef, { ...pending, _updatedAt: Date.now() }).catch(e => console.error(e));
+                    }
+                    globalProgress = cloudClean;
                     try { localStorage.setItem('progress_' + username, JSON.stringify(globalProgress)); } catch(e){}
+                } else {
+                    // 雲端尚無此帳號資料：若本地有離線進度，初始化同步至雲端
+                    const localClean = getCleanProgress(globalProgress);
+                    if (Object.keys(localClean).length > 0 || hasPending) {
+                        setPendingOps(username, {});
+                        set(docRef, { ...localClean, _updatedAt: Date.now() }).catch(e => console.error(e));
+                    }
                 }
+
                 const ud = document.getElementById('display-username');
                 if (ud) ud.innerText = `👤 ${username} (已連線 ☁️)`;
                 
-                if (currentSelections.year === '' && !views.main.classList.contains('hidden')) renderMain();
-                else if (currentSelections.year === '' && currentSelections.sub !== '' && !views.sub.classList.contains('hidden')) renderSub(structure[currentSelections.main]);
+                if (!views.main.classList.contains('hidden')) renderMain();
+                else if (!views.sub.classList.contains('hidden')) renderSub(structure[currentSelections.main]);
+                else if (!views.year.classList.contains('hidden')) renderYear();
             }, (error) => {
                 const ud = document.getElementById('display-username');
                 if (ud) ud.innerText = `👤 ${username} (離線模式 🔴)`;
@@ -49986,11 +50127,11 @@
                 yearGroup.appendChild(lbl);
             });
             window.updateSettingsStat(); window.switchView('settings');
-        }
+        };
 
         window.toggleAllYears = (checked) => {
             document.getElementsByName('quizYear').forEach(b => b.checked = checked); window.updateSettingsStat();
-        }
+        };
 
         window.updateSettingsStat = () => {
             const selectedType = Array.from(document.getElementsByName('quizType')).find(e => e.checked).value;
@@ -50003,12 +50144,12 @@
             const input = document.getElementById('quizCount');
             input.max = filteredPool.length;
             if(parseInt(input.value) > filteredPool.length) input.value = filteredPool.length || 1;
-        }
+        };
 
         window.setCount = (val) => {
             const input = document.getElementById('quizCount');
             input.value = val === 'all' ? input.max : Math.min(val, parseInt(input.max) || 9999);
-        }
+        };
 
         window.startRandomQuiz = () => {
             const selectedType = Array.from(document.getElementsByName('quizType')).find(e => e.checked).value;
@@ -50028,14 +50169,43 @@
             shuffle(priorityPool); shuffle(secondaryPool);
             
             currentQuizList = [...priorityPool, ...secondaryPool].slice(0, count);
-            currentQuestionIndex = 0; historyStack.push('settings'); 
+            currentQuestionIndex = 0;
+            sessionRecords = {}; // 開啟新測驗時重置單回合作答紀錄
+            historyStack.push('settings'); 
             renderQuizUI(); window.switchView('quiz');
-        }
+        };
 
         function prepareQuiz(year) {
             currentSelections.year = year; historyStack.push('year');
             currentQuizList = questionsDB.filter(q => q.main === currentSelections.main && (currentSelections.sub === q.main || q.sub === currentSelections.sub) && (year === '全部年份' || q.year === year));
-            currentQuestionIndex = 0; renderQuizUI(); window.switchView('quiz');
+            currentQuestionIndex = 0;
+            sessionRecords = {}; // 開啟新測驗時重置單回合作答紀錄
+            renderQuizUI(); window.switchView('quiz');
+        }
+
+        // 解析題號與教檢正式題型名稱（選擇題 / 綜合題 / 問答題 / 寫作測驗）
+        function getQuestionMeta(q) {
+            const subjectMap = {
+                'edu': '教育理念與實務',
+                'curr': '課程教學與評量',
+                'learn': '學習者發展與適性輔導',
+                'chi': '國語文能力測驗'
+            };
+            const idParts = q.id.split('-');
+            const subjCode = idParts.find(p => subjectMap[p]) || idParts[idParts.length - 2] || '';
+            const numCode = idParts[idParts.length - 1] || '';
+            const subjName = subjectMap[subjCode] || q.main;
+
+            const yearNum = parseInt(q.year, 10) || 0;
+            let typeLabel = '選擇題';
+            if (q.type !== 'choice') {
+                if (q.sub === '寫作測驗') typeLabel = '寫作測驗';
+                else if (yearNum >= 110) typeLabel = '綜合題';
+                else typeLabel = '問答題';
+            }
+
+            const detailedTitle = numCode ? `${q.year}${subjName}-${numCode}` : `${q.year}${subjName}`;
+            return { detailedTitle, typeLabel };
         }
 
         function renderQuizUI() {
@@ -50046,36 +50216,31 @@
         }
 
         function renderQuestion(q, container) {
-            let typeLabel = q.type === 'choice' ? '選擇題' : '非選題';
-            
-            // 解析 ID 以組合詳細標題
-            const subjectMap = {
-                'edu': '教育理念與實務',
-                'curr': '課程教學與評量',
-                'learn': '學習者發展與適性輔導',
-                'chi': '國語文能力測驗'
-            };
-            const idParts = q.id.split('-');
-            const subjCode = idParts[idParts.length - 2] || '';
-            const numCode = idParts[idParts.length - 1] || '';
-            const subjName = subjectMap[subjCode] || q.main;
-            
-            let detailedTitle = q.year + subjName;
-            if (q.type === 'choice') {
-                detailedTitle += '-' + numCode;
-            } else {
-                detailedTitle += '-混合題';
-            }
+            const { detailedTitle, typeLabel } = getQuestionMeta(q);
+            const rec = sessionRecords[q.id]; // 讀取本回合作答狀態
 
             let html = `<div class="quiz-meta"><span>${detailedTitle}</span><span>${typeLabel}</span></div><div class="question-text" data-id="${q.id}">${q.question}</div>`;
             if (q.type === 'choice') {
-                html += `<div id="options-area" data-answered="false">`;
-                ['A', 'B', 'C', 'D','E'].forEach((opt, idx) => {
-                    if (q.options[idx]) html += `<button class="option-btn" onclick="checkAnswer(this, '${q.id}', '${opt}', '${q.answer}')"><span class="option-tag">${opt}</span>${q.options[idx]}</button>`;
+                const isAnswered = Boolean(rec && rec.userOpt);
+                const correctAnswers = String(q.answer).split(/[,/、]/).map(s => s.trim());
+                html += `<div id="options-area" data-answered="${isAnswered ? 'true' : 'false'}">`;
+                ['A', 'B', 'C', 'D', 'E'].forEach((opt, idx) => {
+                    if (q.options[idx]) {
+                        let btnClass = 'option-btn';
+                        if (isAnswered) {
+                            if (opt === rec.userOpt) btnClass += rec.isCorrect ? ' correct' : ' wrong';
+                            else if (!rec.isCorrect && correctAnswers.includes(opt)) btnClass += ' correct';
+                        }
+                        html += `<button class="${btnClass}" onclick="checkAnswer(this, '${q.id}', '${opt}', '${q.answer}')"><span class="option-tag">${opt}</span>${q.options[idx]}</button>`;
+                    }
                 });
                 html += `</div>`;
-            } else html += `<button class="show-ans-btn" onclick="markReviewedAndToggle('${q.id}')">觀看參考詳解</button>`;
-            html += `<div id="explanation-area" class="explanation-box hidden"><strong>解析：</strong><br>${q.explanation || '暫無解析'}</div>`;
+            } else {
+                html += `<button class="show-ans-btn" onclick="markReviewedAndToggle('${q.id}')">觀看參考詳解</button>`;
+            }
+
+            const showExp = Boolean(rec && rec.showExp);
+            html += `<div id="explanation-area" class="explanation-box ${showExp ? '' : 'hidden'}"><strong>解析：</strong><br>${q.explanation || '暫無解析'}</div>`;
             container.innerHTML = html;
         }
 
@@ -50087,6 +50252,9 @@
             const correctAnswers = String(correctOpt).split(/[,/、]/).map(s => s.trim());
             let isCorrect = correctAnswers.includes(userOpt);
             
+            // 儲存至當次測驗紀錄，切換上下題時保留作答結果與解析顯示
+            sessionRecords[qId] = { type: 'choice', userOpt, isCorrect, showExp: true };
+
             window.saveProgress(qId, isCorrect ? 'correct' : 'wrong');
             btn.classList.add(isCorrect ? 'correct' : 'wrong');
             
@@ -50098,17 +50266,171 @@
                 });
             }
             document.getElementById('explanation-area').classList.remove('hidden');
-        }
+        };
 
-        window.markReviewedAndToggle = (qId) => { window.saveProgress(qId, 'reviewed'); document.getElementById('explanation-area').classList.toggle('hidden'); }
-        window.nextQuestion = () => { if (currentQuestionIndex < currentQuizList.length - 1) { currentQuestionIndex++; renderQuizUI(); } }
-        window.prevQuestion = () => { if (currentQuestionIndex > 0) { currentQuestionIndex--; renderQuizUI(); } }
+        window.markReviewedAndToggle = (qId) => {
+            window.saveProgress(qId, 'reviewed');
+            const expEl = document.getElementById('explanation-area');
+            const isHidden = expEl.classList.toggle('hidden');
+            sessionRecords[qId] = { type: 'non-choice', reviewed: true, showExp: !isHidden };
+        };
+
+        window.nextQuestion = () => {
+            if (currentQuestionIndex < currentQuizList.length - 1) {
+                currentQuestionIndex++;
+                renderQuizUI();
+                window.scrollTo(0, 0);
+            } else {
+                showQuizResult();
+            }
+        };
+
+        window.prevQuestion = () => {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderQuizUI();
+                window.scrollTo(0, 0);
+            }
+        };
 
         function updateControls() {
             document.getElementById('question-counter').innerText = `${currentQuestionIndex + 1} / ${currentQuizList.length}`;
             document.getElementById('btn-prev').disabled = (currentQuestionIndex === 0);
-            document.getElementById('btn-next').disabled = (currentQuestionIndex === currentQuizList.length - 1);
+            
+            const btnNext = document.getElementById('btn-next');
+            btnNext.disabled = false;
+            if (currentQuestionIndex === currentQuizList.length - 1) {
+                btnNext.innerText = '完成結算 📊';
+                btnNext.classList.add('finish-mode');
+            } else {
+                btnNext.innerText = '下一題';
+                btnNext.classList.remove('finish-mode');
+            }
         }
+
+        // --- 測驗結算畫面邏輯 ---
+        function showQuizResult() {
+            historyStack.push('quiz');
+            renderResultUI();
+            window.switchView('result');
+        }
+
+        function renderResultUI() {
+            const container = document.getElementById('result-content');
+            let choiceTotal = 0, choiceCorrect = 0;
+            const wrongItems = [], unansweredItems = [];
+            let nonChoiceTotal = 0, nonChoiceReviewed = 0;
+
+            currentQuizList.forEach((q, idx) => {
+                const rec = sessionRecords[q.id];
+                if (q.type === 'choice') {
+                    choiceTotal++;
+                    if (!rec || !rec.userOpt) unansweredItems.push({ q, idx });
+                    else if (rec.isCorrect) choiceCorrect++;
+                    else wrongItems.push({ q, idx, userOpt: rec.userOpt });
+                } else {
+                    nonChoiceTotal++;
+                    if (rec && rec.reviewed) nonChoiceReviewed++;
+                }
+            });
+
+            let html = `<h3 style="margin-top:0; text-align:center; color:#333;">📊 本次測驗結算</h3>`;
+
+            if (choiceTotal > 0) {
+                const accuracy = Math.round((choiceCorrect / choiceTotal) * 100);
+                html += `
+                    <div class="result-score-box">
+                        <div style="font-size:0.9rem; color:#666;">選擇題答對率</div>
+                        <div class="result-score-num">${accuracy}%</div>
+                        <div style="font-size:0.85rem; color:#888;">共 ${currentQuizList.length} 題（選擇 ${choiceTotal} 題${nonChoiceTotal > 0 ? `、非選 ${nonChoiceTotal} 題` : ''}）</div>
+                    </div>
+                    <div class="result-stat-grid">
+                        <div class="result-stat-item">答對<strong style="color:var(--success);">${choiceCorrect}</strong></div>
+                        <div class="result-stat-item">答錯<strong style="color:var(--error);">${wrongItems.length}</strong></div>
+                        <div class="result-stat-item">未作答<strong style="color:#888;">${unansweredItems.length}</strong></div>
+                    </div>
+                `;
+                if (nonChoiceTotal > 0) {
+                    html += `<div class="stat-info" style="margin-bottom:18px;">📝 非選題已檢視詳解：<strong>${nonChoiceReviewed} / ${nonChoiceTotal}</strong> 題</div>`;
+                }
+            } else {
+                const revRate = nonChoiceTotal > 0 ? Math.round((nonChoiceReviewed / nonChoiceTotal) * 100) : 0;
+                html += `
+                    <div class="result-score-box">
+                        <div style="font-size:0.9rem; color:#666;">非選題複習完成度</div>
+                        <div class="result-score-num">${revRate}%</div>
+                        <div style="font-size:0.85rem; color:#888;">已檢視詳解 ${nonChoiceReviewed} / ${nonChoiceTotal} 題</div>
+                    </div>
+                `;
+            }
+
+            const reviewTargets = [
+                ...wrongItems.map(item => ({ ...item, statusType: 'wrong' })),
+                ...unansweredItems.map(item => ({ ...item, statusType: 'unanswered' }))
+            ];
+
+            if (reviewTargets.length > 0) {
+                html += `<div style="font-weight:600; font-size:0.9rem; color:#555; margin-bottom:8px;">點擊題目可跳回檢視詳解：</div><div class="result-review-list">`;
+                reviewTargets.forEach(item => {
+                    const { detailedTitle } = getQuestionMeta(item.q);
+                    const tmpDiv = document.createElement('div');
+                    tmpDiv.innerHTML = item.q.question;
+                    const plainText = (tmpDiv.textContent || tmpDiv.innerText || '').replace(/\s+/g, ' ').trim()
+                        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const badge = item.statusType === 'wrong'
+                        ? `<span style="color:var(--error);">❌ 選 ${item.userOpt}（正解 ${item.q.answer}）</span>`
+                        : `<span style="color:#888;">⚪ 未作答</span>`;
+                    html += `
+                        <div class="result-review-item" onclick="jumpToQuestionFromResult(${item.idx})">
+                            <div class="result-review-top">
+                                <span style="color:var(--primary);">#${item.idx + 1} ${detailedTitle}</span>
+                                ${badge}
+                            </div>
+                            <div class="result-review-snippet">${plainText}</div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            } else if (choiceTotal > 0) {
+                html += `<div style="text-align:center; padding:15px; background:#e8f8f5; color:#1e8449; border-radius:8px; font-weight:bold; margin-bottom:18px;">🎉 太棒了！本次選擇題全數答對！</div>`;
+            }
+
+            if (wrongItems.length > 0) {
+                html += `<button class="start-btn" style="background:var(--error); margin-top:0; margin-bottom:10px;" onclick="retryWrongInSession()">🔄 重練本回錯題 (${wrongItems.length} 題)</button>`;
+            }
+
+            html += `
+                <div style="display:flex; gap:10px;">
+                    <button class="quick-btn" style="flex:1; padding:12px; font-weight:bold; font-size:0.95rem;" onclick="jumpToQuestionFromResult(0)">🔍 返回檢視題目</button>
+                    <button class="start-btn" style="flex:1; margin-top:0; padding:12px; font-size:0.95rem;" onclick="finishAndExitQuiz()">🏠 返回選單</button>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        window.jumpToQuestionFromResult = (idx) => {
+            if (historyStack[historyStack.length - 1] === 'quiz') historyStack.pop();
+            currentQuestionIndex = idx;
+            renderQuizUI();
+            window.switchView('quiz');
+        };
+
+        window.retryWrongInSession = () => {
+            const wrongQs = currentQuizList.filter(q => q.type === 'choice' && sessionRecords[q.id] && !sessionRecords[q.id].isCorrect);
+            if (wrongQs.length === 0) return;
+            if (historyStack[historyStack.length - 1] === 'quiz') historyStack.pop();
+            currentQuizList = wrongQs;
+            currentQuestionIndex = 0;
+            sessionRecords = {};
+            renderQuizUI();
+            window.switchView('quiz');
+        };
+
+        window.finishAndExitQuiz = () => {
+            if (historyStack[historyStack.length - 1] === 'quiz') historyStack.pop();
+            window.goBack();
+        };
 
         function createCard(text, progData, isMain, onClick) {
             const div = document.createElement('div'); div.className = 'list-card';
@@ -50161,3 +50483,4 @@
     </script>
 </body>
 </html>
+
